@@ -80,7 +80,7 @@
       <div v-if="showEngineList" @click="showEngineList = false" class="fixed inset-0 z-40 bg-transparent cursor-default"></div>
 
       <!-- 3. 内容网格 -->
-      <div v-if="filteredItems.length > 0" class="w-full max-w-[72rem] grid grid-cols-8 gap-2 px-4 pb-10 mx-auto">
+      <div v-if="filteredItems.length > 0" class="w-full max-w-[72rem] grid grid-cols-4 md:grid-cols-6 xl:grid-cols-8 gap-2 px-4 pb-10 mx-auto">
         <NavCard
           v-for="(item, index) in filteredItems"
           :key="item.url || index"
