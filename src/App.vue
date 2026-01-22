@@ -636,29 +636,12 @@ const onDragEnd = (evt, categoryKey) => {
   // 如果位置没有变化，直接返回
   if (oldIndex === newIndex) return
 
-  // 获取当前显示的项目
-  const currentItems = draggablesList.value
-
-  // 获取或创建当前分类的排序数组
-  if (!customOrder.value[categoryKey]) {
-    customOrder.value[categoryKey] = currentItems.map(item => item.id || item.url)
-  }
-
-  // 更新排序数组
-  const orderArray = [...customOrder.value[categoryKey]]
-
-  // 更新顺序
-  const movedItem = currentItems[oldIndex]
-  orderArray.splice(oldIndex, 1)
-  orderArray.splice(newIndex, 0, movedItem.id || movedItem.url)
-
-  customOrder.value[categoryKey] = orderArray
+  // vuedraggable 已经自动更新了 draggablesList，我们只需要从中提取新的顺序
+  // 这比使用 oldIndex/newIndex 手动更新更可靠
+  customOrder.value[categoryKey] = draggablesList.value.map(item => item.id || item.url)
 
   // 保存到 localStorage
   localStorage.setItem('navCustomOrder', JSON.stringify(customOrder.value))
-
-  // 更新显示列表（重新应用排序）
-  draggablesList.value = [...filteredItems.value]
 }
 
 // 根据自定义排序对项目进行排序
