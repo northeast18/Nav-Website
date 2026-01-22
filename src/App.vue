@@ -123,7 +123,7 @@
       <div v-if="showEngineList" @click="showEngineList = false" class="fixed inset-0 z-40 bg-transparent cursor-default"></div>
 
       <!-- 3. 内容网格 -->
-      <div v-if="draggablesList.length > 0" class="w-full max-w-[72rem] grid grid-cols-4 md:grid-cols-6 xl:grid-cols-8 gap-1.5 px-2 sm:px-3 pb-8 mx-auto">
+      <div v-if="draggablesList.length > 0" class="w-full max-w-[80rem] grid grid-cols-4 md:grid-cols-6 xl:grid-cols-8 gap-1.5 px-1 sm:px-2 pb-8 mx-auto">
         <draggable
           v-model="draggablesList"
           item-key="id"
