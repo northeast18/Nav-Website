@@ -2,7 +2,7 @@
   <div
     @click="handleClick"
     @contextmenu.prevent="toggleFavorite"
-    class="group relative flex flex-col items-center justify-center py-1.5 sm:py-2 px-0.5 rounded-xl border transition-all duration-500 cursor-pointer h-full overflow-hidden"
+    class="group relative flex flex-col items-center justify-center py-1.5 sm:py-2 px-0 rounded-xl border transition-all duration-500 cursor-pointer h-full overflow-hidden"
     :class="[
       isFavorite ? 'bg-gradient-to-br from-purple-900/40 to-pink-900/40 border-pink-500/50 shadow-lg shadow-pink-500/20' : 'bg-gray-900/60 border-white/10 hover:border-purple-400/50',
       'hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/30'
@@ -54,7 +54,7 @@
     </div>
 
     <!-- 文字部分 -->
-    <div class="text-center w-full px-0.5 relative z-10">
+    <div class="text-center w-full px-0 relative z-10">
       <h3 class="text-[10px] sm:text-xs font-semibold text-gray-200 tracking-wide group-hover:text-white transition-colors truncate leading-tight mb-0.5" :class="{ 'text-pink-300 group-hover:text-pink-200': isFavorite }">
         {{ item.name }}
       </h3>
