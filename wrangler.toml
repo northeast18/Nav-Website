@@ -1,0 +1,13 @@
+name = "nav-website-sync"
+main = "worker/index.js"
+compatibility_date = "2024-01-01"
+
+# KV 命名空间绑定（需要先创建 KV 命名空间）
+# 创建命令: wrangler kv:namespace create "NAV_KV"
+[[kv_namespaces]]
+binding = "NAV_KV"
+id = "your_kv_namespace_id"  # 创建 KV 后会显示 ID，需要替换
+preview_id = "your_preview_kv_id"
+
+[vars]
+ENVIRONMENT = "production"

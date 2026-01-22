@@ -1,0 +1,16 @@
+{
+  "name": "nav-website-sync-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for Nav-Website sync",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler publish"
+  },
+  "dependencies": {
+    "itty-router": "^4.0.20"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

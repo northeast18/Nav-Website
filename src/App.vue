@@ -12,6 +12,24 @@
       
       <!-- 1. 顶部导航栏 -->
       <header class="w-full max-w-6xl mb-4 sm:mb-6 z-20 relative">
+        <div class="flex justify-between items-center mb-3 px-2">
+          <!-- 云同步按钮 -->
+          <button
+            @click="showSyncModal = true"
+            class="px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all duration-300 border backdrop-blur-md inline-flex items-center gap-1 bg-gradient-to-r from-blue-600/80 to-cyan-600/80 border-blue-500/50 text-white hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            云同步
+          </button>
+
+          <!-- 同步状态指示器 -->
+          <div v-if="syncStatus" class="text-[10px] sm:text-xs" :class="syncStatus.type === 'success' ? 'text-green-400' : 'text-red-400'">
+            {{ syncStatus.message }}
+          </div>
+        </div>
+
         <nav class="flex justify-center px-1">
           <div class="flex flex-wrap justify-center gap-1 sm:gap-1.5 pb-1">
             <!-- 常用按钮 -->
@@ -264,6 +282,76 @@
       </div>
     </div>
 
+    <!-- 7. 云同步弹窗 -->
+    <div v-if="showSyncModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showSyncModal = false">
+      <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+
+      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-8 w-full max-w-md transform transition-all">
+        <!-- 光效背景 -->
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-cyan-600/10 rounded-3xl pointer-events-none"></div>
+
+        <div class="relative z-10">
+          <div class="flex justify-between items-center mb-8">
+            <h3 class="text-2xl font-bold text-white flex items-center gap-3">
+              <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              云同步
+            </h3>
+            <button @click="showSyncModal = false" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-xl">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+
+          <!-- 用户 ID 显示 -->
+          <div class="mb-6 p-4 bg-gray-700/30 rounded-xl border border-white/5">
+            <p class="text-gray-400 text-xs mb-2">你的同步 ID</p>
+            <div class="flex items-center gap-2">
+              <code class="flex-1 text-sm text-blue-400 bg-gray-900/50 px-3 py-2 rounded-lg break-all">{{ syncAuthToken }}</code>
+              <button
+                @click="copyAuthToken"
+                class="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                title="复制"
+              >
+                <svg class="w-5 h-5 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 同步按钮 -->
+          <div class="space-y-3">
+            <button
+              @click="syncToCloud"
+              :disabled="isSyncing"
+              class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              {{ isSyncing ? '同步中...' : '上传到云端' }}
+            </button>
+
+            <button
+              @click="syncFromCloud"
+              :disabled="isSyncing"
+              class="w-full px-4 py-3 bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3-3m0 0l3 3m-3-3v12" />
+              </svg>
+              {{ isSyncing ? '下载中...' : '从云端恢复' }}
+            </button>
+          </div>
+
+          <p class="mt-4 text-center text-gray-500 text-xs">
+            使用相同 ID 可在多设备间同步数据
+          </p>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -280,11 +368,23 @@ const searchQuery = ref('')
 const showEngineList = ref(false)
 const showFriendModal = ref(false) // 控制友链弹窗
 const showPasswordModal = ref(false) // 控制密码弹窗
+const showSyncModal = ref(false) // 控制同步弹窗
 const passwordInput = ref('') // 密码输入
 const passwordError = ref(false) // 密码错误提示
 const isPrivateUnlocked = ref(false) // 私密分类是否已解锁
 const PRIVATE_PASSWORD = 'sbp844695' // 私密分类密码（可自定义）
 const currentEngine = ref(searchEngines[0])
+
+// === 云同步状态 ===
+const API_BASE = import.meta.env.VITE_SYNC_API || 'https://nav-website-sync.your-subdomain.workers.dev'
+const syncAuthToken = ref(localStorage.getItem('syncAuthToken') || generateDeviceId())
+const isSyncing = ref(false)
+const syncStatus = ref(null)
+
+// 生成设备 ID
+function generateDeviceId() {
+  return 'device_' + Math.random().toString(36).substring(2, 15)
+}
 
 // === 点击统计 ===
 const DATA_VERSION = '1.0' // 数据版本号
@@ -413,6 +513,95 @@ const cancelPassword = () => {
   passwordInput.value = ''
   passwordError.value = false
 }
+
+// === 云同步功能 ===
+// 保存同步 token
+watch(syncAuthToken, () => {
+  localStorage.setItem('syncAuthToken', syncAuthToken.value)
+})
+
+// 复制同步 ID
+const copyAuthToken = () => {
+  navigator.clipboard.writeText(syncAuthToken.value)
+  syncStatus.value = { type: 'success', message: 'ID 已复制' }
+  setTimeout(() => syncStatus.value = null, 2000)
+}
+
+// 上传到云端
+const syncToCloud = async () => {
+  isSyncing.value = true
+  try {
+    const response = await fetch(`${API_BASE}/api/sync/save`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${syncAuthToken.value}`
+      },
+      body: JSON.stringify({
+        favorites: [...favorites.value],
+        order: customOrder.value,
+        visits: visitHistory.value,
+        clicks: clickCounts.value,
+        timestamp: Date.now()
+      })
+    })
+
+    const result = await response.json()
+
+    if (response.ok && result.success) {
+      syncStatus.value = { type: 'success', message: '✅ 已同步到云端' }
+      setTimeout(() => {
+        syncStatus.value = null
+        showSyncModal.value = false
+      }, 2000)
+    } else {
+      syncStatus.value = { type: 'error', message: '❌ ' + (result.error || '同步失败') }
+    }
+  } catch (error) {
+    syncStatus.value = { type: 'error', message: '❌ 网络错误: ' + error.message }
+  } finally {
+    isSyncing.value = false
+  }
+}
+
+// 从云端恢复
+const syncFromCloud = async () => {
+  isSyncing.value = true
+  try {
+    const response = await fetch(`${API_BASE}/api/sync/read?userId=${syncAuthToken.value}`)
+    const data = await response.json()
+
+    if (response.ok && data.favorites) {
+      // 更新本地数据
+      favorites.value = new Set(data.favorites)
+      customOrder.value = data.order || {}
+      visitHistory.value = data.visits || {}
+      clickCounts.value = data.clicks || {}
+
+      // 保存到 localStorage
+      localStorage.setItem('navFavorites', JSON.stringify(data.favorites))
+      localStorage.setItem('navCustomOrder', JSON.stringify(data.order))
+      localStorage.setItem('navVisits', JSON.stringify(data.visits))
+      localStorage.setItem('navClickCounts', JSON.stringify(data.clicks))
+
+      // 刷新显示
+      draggablesList.value = [...filteredItems.value]
+
+      syncStatus.value = { type: 'success', message: '✅ 已从云端恢复' }
+      setTimeout(() => {
+        syncStatus.value = null
+        showSyncModal.value = false
+      }, 2000)
+    } else {
+      syncStatus.value = { type: 'error', message: '❌ ' + (data.error || '恢复失败') }
+    }
+  } catch (error) {
+    syncStatus.value = { type: 'error', message: '❌ 网络错误: ' + error.message }
+  } finally {
+    isSyncing.value = false
+  }
+}
+
 
 // === 拖拽排序逻辑 ===
 // 拖拽列表的响应式数据
