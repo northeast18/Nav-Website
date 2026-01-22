@@ -143,7 +143,7 @@ export const navItems = [
       name: '订阅管理',      
       url: 'https://tz.xiaoxiao19.dpdns.org/',
       desc: '通知提醒',
-      icon: 'link' 
+      iconUrl: '/icon.png' 
     },
 
   ]

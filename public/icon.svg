@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512">
+  <!-- 盾牌形状 -->
+  <path d="M32,4 C18,4 8,14 8,24 C8,40 20,54 32,60 C44,54 56,40 56,24 C56,14 46,4 32,4 Z" fill="none" stroke="#2C3E50" stroke-width="4" stroke-linejoin="round"/>
+  <!-- 内部箭头 -->
+  <path d="M32,16 L18,34 L32,28 L46,34 L32,16 Z" fill="#3498DB"/>
+</svg>
