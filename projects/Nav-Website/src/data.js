@@ -118,13 +118,6 @@ export const navItems = [
       iconUrl: '/changedetection.png' 
     },
     {
-      id: 16,
-      name: 'File Browser',      
-      url: 'http://localhost:8082',
-      desc: '文件浏览器',
-      iconUrl: '/filebrowser.png' 
-    },
-    {
       id: 17,
       name: 'qBittorrent',      
       url: 'http://localhost:8085',
