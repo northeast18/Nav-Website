@@ -314,8 +314,22 @@
 
           <!-- 用户 ID 显示 -->
           <div class="mb-6 p-4 bg-gray-700/30 rounded-xl border border-white/5">
-            <p class="text-gray-400 text-xs mb-2">你的同步 ID</p>
-            <div class="flex items-center gap-2">
+            <div class="flex justify-between items-center mb-2">
+              <p class="text-gray-400 text-xs">你的同步 ID</p>
+              <button
+                v-if="!isEditingId"
+                @click="startEditId"
+                class="text-[10px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                修改
+              </button>
+            </div>
+
+            <!-- 显示模式 -->
+            <div v-if="!isEditingId" class="flex items-center gap-2">
               <code class="flex-1 text-sm text-blue-400 bg-gray-900/50 px-3 py-2 rounded-lg break-all">{{ syncAuthToken }}</code>
               <button
                 @click="copyAuthToken"
@@ -326,6 +340,32 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </button>
+            </div>
+
+            <!-- 编辑模式 -->
+            <div v-else class="space-y-2">
+              <input
+                v-model="editingId"
+                type="text"
+                class="w-full px-3 py-2 text-sm text-blue-400 bg-gray-900/50 border border-blue-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder-gray-500"
+                placeholder="输入新的同步 ID"
+                @keyup.enter="saveId"
+                @keyup.esc="cancelEditId"
+              >
+              <div class="flex gap-2">
+                <button
+                  @click="saveId"
+                  class="flex-1 px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                >
+                  保存
+                </button>
+                <button
+                  @click="cancelEditId"
+                  class="flex-1 px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                >
+                  取消
+                </button>
+              </div>
             </div>
           </div>
 
@@ -547,6 +587,36 @@ const copyAuthToken = () => {
   navigator.clipboard.writeText(syncAuthToken.value)
   syncStatus.value = { type: 'success', message: 'ID 已复制' }
   setTimeout(() => syncStatus.value = null, 2000)
+}
+
+// 编辑 ID 相关状态
+const isEditingId = ref(false)
+const editingId = ref('')
+
+// 开始编辑 ID
+const startEditId = () => {
+  editingId.value = syncAuthToken.value
+  isEditingId.value = true
+}
+
+// 保存 ID
+const saveId = () => {
+  const newId = editingId.value.trim()
+  if (!newId) {
+    syncStatus.value = { type: 'error', message: '❌ ID 不能为空' }
+    setTimeout(() => syncStatus.value = null, 2000)
+    return
+  }
+  syncAuthToken.value = newId
+  isEditingId.value = false
+  syncStatus.value = { type: 'success', message: '✅ ID 已更新' }
+  setTimeout(() => syncStatus.value = null, 2000)
+}
+
+// 取消编辑 ID
+const cancelEditId = () => {
+  editingId.value = ''
+  isEditingId.value = false
 }
 
 // 上传到云端
