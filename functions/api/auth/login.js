@@ -40,8 +40,8 @@ export async function onRequest(context) {
       return jsonResponse({ error: '用户名或密码错误' }, 401)
     }
 
-    // 生成用户 token（使用用户 ID 作为 token）
-    const token = generateToken(user.id)
+    // 使用固定的用户 ID 作为 token（确保同一用户每次登录得到相同的 token）
+    const token = `user_${user.id}`
 
     return jsonResponse({
       success: true,

@@ -1195,6 +1195,11 @@ const syncToCloud = async () => {
     // 从 localStorage 读取最新的分类顺序（确保是最新值）
     const latestCategoryOrder = JSON.parse(localStorage.getItem('navCategoryOrder') || '[]')
 
+    console.log('📤 准备上传到云端:')
+    console.log('  - 使用的 token:', syncAuthToken.value)
+    console.log('  - categoryOrder 数据:', latestCategoryOrder)
+    console.log('  - categoryOrder 长度:', latestCategoryOrder.length)
+
     const response = await fetch(`${API_BASE}/api/sync/save`, {
       method: 'POST',
       headers: {
@@ -1212,6 +1217,7 @@ const syncToCloud = async () => {
     })
 
     const result = await response.json()
+    console.log('📤 云端返回结果:', result)
 
     if (response.ok && result.success) {
       syncStatus.value = { type: 'success', message: '✅ 已同步到云端' }
@@ -1220,9 +1226,11 @@ const syncToCloud = async () => {
         showSyncModal.value = false
       }, 2000)
     } else {
+      console.error('❌ 同步失败:', result)
       syncStatus.value = { type: 'error', message: '❌ ' + (result.error || '同步失败') }
     }
   } catch (error) {
+    console.error('❌ 网络错误:', error)
     syncStatus.value = { type: 'error', message: '❌ 网络错误: ' + error.message }
   } finally {
     isSyncing.value = false
