@@ -123,8 +123,7 @@ Nav-Website/
 │       ├── sync/                  # 同步 API
 │       ├── private/               # 私密验证
 │       │   └── verify.js
-│       └── migrate/               # 数据迁移
-│           └── route.js
+│       └── migrate.js             # 数据迁移
 ├── scripts/
 │   └── migrate-to-d1.js          # 迁移脚本
 ├── extension/                     # 浏览器扩展

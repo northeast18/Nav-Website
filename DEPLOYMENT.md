@@ -334,8 +334,7 @@ Nav-Website/
 │       ├── sync/                  # 同步 API（已有）
 │       ├── private/               # 私密验证（新增）
 │       │   └── verify.js
-│       └── migrate/               # 数据迁移（新增）
-│           └── route.js
+│       └── migrate.js             # 数据迁移（新增）
 ├── scripts/
 │   └── migrate-to-d1.js          # 迁移脚本
 ├── schema.sql                     # D1 数据库结构
