@@ -75,45 +75,32 @@
     <div class="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-purple-400/30 transition-all duration-500 pointer-events-none"></div>
 
     <!-- 弹窗部分 -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.stop>
-      <div class="absolute inset-0 bg-black/70 backdrop-blur-md" @click.stop="showModal = false"></div>
+    <div v-if="showModal" class="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl" @click.stop>
+      <div class="bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-2xl shadow-2xl p-2 transform transition-all" @click.stop>
+        <div class="relative z-10 flex items-center gap-1">
+          <a
+            :href="item.lanUrl"
+            target="_blank"
+            @click="handleLinkClick"
+            class="group/btn flex items-center justify-center p-2 rounded-xl bg-gray-700/40 hover:bg-purple-600/80 transition-all duration-300 border border-white/5 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/30"
+            title="内网地址"
+          >
+            <svg class="w-5 h-5 text-purple-400 group-hover/btn:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </a>
 
-      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-8 w-full max-w-sm transform transition-all">
-        <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-pink-600/10 rounded-3xl pointer-events-none"></div>
-
-        <div class="relative z-10">
-          <h3 class="text-xl font-bold text-white mb-6 text-center tracking-wide">选择访问方式</h3>
-
-          <div class="grid grid-cols-2 gap-4">
-            <a
-              :href="item.lanUrl"
-              target="_blank"
-              @click="handleLinkClick"
-              class="group/btn flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gray-700/40 hover:bg-purple-600/80 transition-all duration-300 border border-white/5 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-1"
-            >
-              <svg class="w-8 h-8 text-purple-400 group-hover/btn:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span class="text-sm font-semibold text-gray-300 group-hover/btn:text-white transition-colors">内网地址</span>
-            </a>
-
-            <a
-              :href="item.url"
-              target="_blank"
-              @click="handleLinkClick"
-              class="group/btn flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gray-700/40 hover:bg-blue-600/80 transition-all duration-300 border border-white/5 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1"
-            >
-              <svg class="w-8 h-8 text-blue-400 group-hover/btn:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-              </svg>
-              <span class="text-sm font-semibold text-gray-300 group-hover/btn:text-white transition-colors">外网地址</span>
-            </a>
-          </div>
-
-          <button @click.stop="showModal = false" class="mt-6 w-full py-3 text-sm text-gray-400 hover:text-white transition-colors hover:bg-white/5 rounded-xl">
-            取消
-          </button>
+          <a
+            :href="item.url"
+            target="_blank"
+            @click="handleLinkClick"
+            class="group/btn flex items-center justify-center p-2 rounded-xl bg-gray-700/40 hover:bg-blue-600/80 transition-all duration-300 border border-white/5 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/30"
+            title="外网地址"
+          >
+            <svg class="w-5 h-5 text-blue-400 group-hover/btn:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+          </a>
         </div>
       </div>
     </div>
@@ -121,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
   item: Object,

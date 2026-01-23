@@ -646,6 +646,34 @@ export const navItems = [
       //   desc: '不公开的服务',
       //   iconUrl: '/icon.png'
       // }
+     {
+      id: 1,
+      name: 'cfnew1',
+      url: 'https://xx.xiaoxiao19.dpdns.org/sub',
+      desc: '节点订阅xiaoxiao',
+      iconUrl: '/icon.png'
+     },
+     {
+      id: 2,
+      name: 'cfnew2',
+      url: 'https://xxx.jishux.dpdns.org/sub',
+      desc: '节点订阅jishux',
+      icon: 'link'
+     },
+     {
+      id: 3,
+      name: 'edgetunnel',
+      url: 'https://tun.jishux.dpdns.org/admin',
+      desc: '节点订阅',
+      icon: 'link'
+     },
+     {
+      id: 4,
+      name: 'am-cf-tunnel',
+      url: 'https://sub.jishux.dpdns.org/',
+      desc: '数字套利',
+      icon: 'link'
+     },
     ]
   }
 ]
