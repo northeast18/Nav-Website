@@ -91,7 +91,8 @@
               :key="item.category"
               draggable="isCategoryEditModeActive"
               @dragstart="onCategoryDragStart($event, index)"
-              @dragover.prevent="onCategoryDragOver($event, index)"
+              @dragover.prevent="onCategoryDragOver"
+              @drop="onCategoryDrop($event, index)"
               @dragend="onCategoryDragEnd"
               @click="handleCategoryClick(item)"
               class="px-2 sm:px-3 py-1 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center gap-0.5 whitespace-nowrap relative"
@@ -517,6 +518,8 @@ const isDragModeActive = ref(false) // 拖拽模式是否激活
 const isCategoryEditModeActive = ref(false) // 分类编辑模式是否激活
 const categoryOrder = ref([]) // 分类自定义顺序
 const draggingCategoryIndex = ref(-1) // 正在拖拽的分类索引
+const draggedCategoryName = ref('') // 正在拖拽的分类名称
+const tempCategoryOrder = ref([]) // 拖拽过程中的临时顺序
 
 // 切换分类编辑模式
 const toggleCategoryEditMode = () => {
@@ -645,18 +648,23 @@ const saveCategoryOrder = () => {
 
 // 按照自定义顺序排序分类
 const sortedNavItems = computed(() => {
+  // 如果正在拖拽，使用临时顺序
+  const order = (isCategoryEditModeActive.value && tempCategoryOrder.value.length > 0)
+    ? tempCategoryOrder.value
+    : categoryOrder.value
+
   const items = navItems.value
-  if (categoryOrder.value.length === 0) {
+  if (order.length === 0) {
     return items
   }
 
   // 创建排序后的数组
   const sorted = []
-  const ordered = new Set(categoryOrder.value)
+  const ordered = new Set(order)
   const remaining = []
 
   // 先按照自定义顺序排列
-  categoryOrder.value.forEach(cat => {
+  order.forEach(cat => {
     const found = items.find(item => item.category === cat)
     if (found) sorted.push(found)
   })
@@ -674,34 +682,60 @@ const sortedNavItems = computed(() => {
 // 分类拖拽开始
 const onCategoryDragStart = (event, index) => {
   draggingCategoryIndex.value = index
+  draggedCategoryName.value = sortedNavItems.value[index].category
+
+  // 创建临时顺序的副本
+  tempCategoryOrder.value = sortedNavItems.value.map(item => item.category)
+
   event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/html', event.target.innerHTML)
+  event.dataTransfer.setData('text/plain', index.toString())
+
+  // 设置拖拽图像
+  event.target.style.opacity = '0.5'
 }
 
 // 分类拖拽结束
-const onCategoryDragEnd = () => {
+const onCategoryDragEnd = (event) => {
+  event.target.style.opacity = '1'
+
+  if (draggingCategoryIndex.value !== -1) {
+    // 应用临时顺序
+    categoryOrder.value = [...tempCategoryOrder.value]
+  }
+
   draggingCategoryIndex.value = -1
+  draggedCategoryName.value = ''
+  tempCategoryOrder.value = []
 }
 
-// 分类拖拽经过
-const onCategoryDragOver = (event, index) => {
-  if (draggingCategoryIndex.value === -1 || draggingCategoryIndex.value === index) {
+// 分类拖拽进入（使用 drop 而不是 dragover）
+const onCategoryDrop = (event, targetIndex) => {
+  event.preventDefault()
+
+  const fromIndex = draggingCategoryIndex.value
+  if (fromIndex === -1 || fromIndex === targetIndex) {
     return
   }
 
-  // 获取当前排序的分类列表
-  const currentOrder = sortedNavItems.value.map(item => item.category)
-  const items = [...currentOrder]
+  // 获取当前临时顺序
+  const items = [...tempCategoryOrder.value]
 
-  // 移动元素
-  const draggedItem = items[draggingCategoryIndex.value]
-  items.splice(draggingCategoryIndex.value, 1)
-  items.splice(index, 0, draggedItem)
+  // 移除被拖拽的元素
+  const draggedItem = items[fromIndex]
+  items.splice(fromIndex, 1)
 
-  // 更新分类顺序
-  categoryOrder.value = items
+  // 插入到新位置
+  items.splice(targetIndex, 0, draggedItem)
 
-  draggingCategoryIndex.value = index
+  // 更新临时顺序
+  tempCategoryOrder.value = items
+  draggingCategoryIndex.value = targetIndex
+}
+
+// 分类拖拽经过（阻止默认行为以允许 drop）
+const onCategoryDragOver = (event) => {
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'move'
 }
 
 // 切换拖拽模式
