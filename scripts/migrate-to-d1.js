@@ -1,5 +1,5 @@
-// 数据迁移脚本：将 data.js 数据导入到 D1 数据库
-import { navItems } from '../src/data.js'
+// 数据迁移脚本：将 data.backup.js 数据导入到 D1 数据库
+import { navItems } from '../src/data.backup.js'
 
 /**
  * 迁移数据到 D1 数据库

@@ -257,10 +257,10 @@ https://your-project.pages.dev/
 
 ### Q1: 开发模式看不到数据？
 
-**A**: 开发模式返回模拟数据。你的实际数据在 `src/data.js.backup` 中。
+**A**: 开发模式返回模拟数据。你的实际数据在 `src/data.backup.js` 中。
 
 **解决方案**：
-- 开发时：数据来自 `src/data.js.backup`
+- 开发时：数据来自 `src/data.backup.js`
 - 生产环境：数据来自 D1 数据库
 
 ### Q2: 部署后私密分类打不开？
@@ -325,7 +325,7 @@ Nav-Website/
 ├── src/
 │   ├── App.vue                    # 主应用（已改造）
 │   ├── data.js                   # API 数据加载
-│   └── data.js.backup           # 原始静态数据备份
+│   └── data.backup.js           # 原始静态数据备份
 ├── functions/
 │   └── api/
 │       ├── websites/              # 网站数据 API

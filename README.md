@@ -114,7 +114,7 @@ Nav-Website/
 ├── src/
 │   ├── App.vue                    # 主应用
 │   ├── data.js                   # API 数据加载
-│   └── data.js.backup           # 原始静态数据备份
+│   └── data.backup.js           # 原始静态数据备份
 ├── functions/
 │   └── api/
 │       ├── websites/              # 网站数据 API
@@ -169,7 +169,7 @@ MIT
 #### 文件变更
 - `src/data.js` - 从静态数据改为 API 加载器
 - `src/App.vue` - 移除硬编码密码，改为 API 调用
-- `src/data.js.backup` - 备份原始数据
+- `src/data.backup.js` - 备份原始数据
 - `functions/api/` - 新增所有 API 端点
 - `extension/` - 浏览器扩展（含分类子菜单）
 - `schema.sql` - D1 数据库结构
