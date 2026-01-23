@@ -823,14 +823,14 @@ const filteredItems = computed(() => {
 
   if (activeCategory.value === 'frequent') {
     // 常用：显示最常访问的网站
-    navItems.forEach(category => items = items.concat(category.items))
+    navItems.value.forEach(category => items = items.concat(category.items))
     // 按点击次数排序，取前 16 个
     items = items
       .sort((a, b) => (clickCounts.value[b.url] || 0) - (clickCounts.value[a.url] || 0))
       .slice(0, 16)
   } else if (activeCategory.value === 'favorites') {
     // 我的收藏：显示所有收藏的项目
-    navItems.forEach(category => {
+    navItems.value.forEach(category => {
       category.items.forEach(item => {
         if (isFavorite(item)) {
           items.push(item)
@@ -846,7 +846,7 @@ const filteredItems = computed(() => {
       return []
     }
     // 查找私密分类
-    const category = navItems.find(c => c.category === '私密')
+    const category = navItems.value.find(c => c.category === '私密')
     if (category) {
       items = category.items
       // 应用自定义排序
@@ -854,7 +854,7 @@ const filteredItems = computed(() => {
     }
   } else {
     // 普通分类
-    const category = navItems.find(c => c.category === activeCategory.value)
+    const category = navItems.value.find(c => c.category === activeCategory.value)
     if (category) {
       items = category.items
       // 应用自定义排序
