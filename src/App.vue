@@ -801,8 +801,10 @@ const onCategoryDrop = (event, targetIndex) => {
 const toggleDragMode = () => {
   isDragModeActive.value = !isDragModeActive.value
   if (!isDragModeActive.value) {
-    // 完成拖拽，显示保存提示
-    syncStatus.value = { type: 'success', message: '✅ 拖拽排序已保存' }
+    // 完成拖拽，自动云同步
+    syncToCloud()
+    // 显示保存提示
+    syncStatus.value = { type: 'success', message: '✅ 拖拽排序已保存并同步' }
     setTimeout(() => syncStatus.value = null, 2000)
   }
 }
@@ -938,6 +940,8 @@ const toggleFavorite = (item) => {
   }
   // 保存到 localStorage
   localStorage.setItem('navFavorites', JSON.stringify([...favorites.value]))
+  // 自动云同步
+  syncToCloud()
 }
 
 // === 密码验证逻辑 ===
