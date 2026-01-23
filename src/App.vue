@@ -533,6 +533,8 @@ const toggleCategoryEditMode = () => {
   if (!isCategoryEditModeActive.value) {
     // 退出编辑模式时保存顺序
     saveCategoryOrder()
+    // 自动触发云同步
+    syncToCloud()
   }
 }
 
