@@ -650,8 +650,15 @@ const createNewCategory = async () => {
 
 // 保存分类顺序
 const saveCategoryOrder = () => {
+  // 优先使用 tempCategoryOrder（确保获取最新的拖拽顺序）
+  const orderToSave = tempCategoryOrder.value.length > 0
+    ? tempCategoryOrder.value
+    : categoryOrder.value
+
+  console.log('保存分类顺序到 localStorage:', orderToSave)
+
   // 保存到 localStorage
-  localStorage.setItem('navCategoryOrder', JSON.stringify(categoryOrder.value))
+  localStorage.setItem('navCategoryOrder', JSON.stringify(orderToSave))
 }
 
 // 按照自定义顺序排序分类
@@ -1071,6 +1078,9 @@ const syncFromCloud = async () => {
     const response = await fetch(`${API_BASE}/api/sync/read?userId=${syncAuthToken.value}`)
     const data = await response.json()
 
+    console.log('📥 从云端读取的数据:', data)
+    console.log('📥 云端的 categoryOrder:', data.categoryOrder)
+
     if (response.ok && data.favorites) {
       // 更新本地数据
       favorites.value = new Set(data.favorites)
@@ -1078,6 +1088,8 @@ const syncFromCloud = async () => {
       categoryOrder.value = data.categoryOrder || []
       visitHistory.value = data.visits || {}
       clickCounts.value = data.clicks || {}
+
+      console.log('✓ 已应用 categoryOrder 到响应式变量:', categoryOrder.value)
 
       // 保存到 localStorage
       localStorage.setItem('navFavorites', JSON.stringify(data.favorites))
