@@ -89,7 +89,7 @@
             <button
               v-for="(item, index) in sortedNavItems"
               :key="item.category"
-              draggable="isCategoryEditModeActive"
+              :draggable="isCategoryEditModeActive"
               @dragstart="onCategoryDragStart($event, index)"
               @dragend="onCategoryDragEnd"
               @dragover.prevent="onCategoryDragOver"
