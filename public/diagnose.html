@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系统诊断工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 30px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+    }
+    .test-section h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #555;
+    }
+    button {
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .result.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .result.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .result.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .status.ok {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.fail {
+      background: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 系统诊断工具</h1>
+    <p style="margin-bottom: 20px; color: #666;">用于诊断 Cloudflare Pages Functions 配置问题</p>
+
+    <!-- 测试 1: 检查 API 可访问性 -->
+    <div class="test-section">
+      <h2>测试 1: API 可访问性 <span id="test1-status" class="status">待测试</span></h2>
+      <button onclick="testAPI()">测试 API 端点</button>
+      <div id="test1-result" class="result"></div>
+    </div>
+
+    <!-- 测试 2: 测试 D1 数据库 -->
+    <div class="test-section">
+      <h2>测试 2: D1 数据库连接 <span id="test2-status" class="status">待测试</span></h2>
+      <button onclick="testD1()">测试数据库</button>
+      <div id="test2-result" class="result"></div>
+    </div>
+
+    <!-- 测试 3: 测试密码验证 -->
+    <div class="test-section">
+      <h2>测试 3: 密码验证 <span id="test3-status" class="status">待测试</span></h2>
+      <div style="margin-bottom: 10px;">
+        <input type="password" id="testPassword" placeholder="输入密码" style="padding: 8px; width: 200px;">
+      </div>
+      <button onclick="testPassword()">验证密码</button>
+      <div id="test3-result" class="result"></div>
+    </div>
+
+    <!-- 测试 4: 环境绑定检查 -->
+    <div class="test-section">
+      <h2>测试 4: 环境绑定检查 <span id="test4-status" class="status">待测试</span></h2>
+      <button onclick="testBindings()">检查绑定</button>
+      <div id="test4-result" class="result"></div>
+    </div>
+
+    <!-- 测试 5: 尝试添加数据 -->
+    <div class="test-section">
+      <h2>测试 5: 添加测试数据 <span id="test5-status" class="status">待测试</span></h2>
+      <button onclick="testAddData()">添加测试网站</button>
+      <div id="test5-result" class="result"></div>
+    </div>
+  </div>
+
+  <script>
+    const apiUrl = window.location.origin;
+
+    function showResult(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = `result ${type}`;
+      el.style.display = 'block';
+    }
+
+    function setStatus(id, status) {
+      const el = document.getElementById(id);
+      el.className = `status ${status ? 'ok' : 'fail'}`;
+      el.textContent = status ? '✅ 通过' : '❌ 失败';
+    }
+
+    async function testAPI() {
+      try {
+        const response = await fetch(`${apiUrl}/api/websites/read`);
+        const data = await response.json();
+
+        showResult('test1-result', `✅ API 可访问\n\n返回数据:\n${JSON.stringify(data, null, 2)}`, 'success');
+        setStatus('test1-status', true);
+      } catch (error) {
+        showResult('test1-result', `❌ API 访问失败\n\n错误: ${error.message}`, 'error');
+        setStatus('test1-status', false);
+      }
+    }
+
+    async function testD1() {
+      try {
+        const response = await fetch(`${apiUrl}/api/websites/read`);
+        const data = await response.json();
+
+        if (data.navItems && Array.isArray(data.navItems)) {
+          showResult('test2-result', `✅ D1 数据库正常\n\n数据表已创建\n当前网站数量: ${data.navItems.length} 个分类`, 'success');
+          setStatus('test2-status', true);
+        } else {
+          showResult('test2-result', `⚠️ API 返回数据格式异常\n\n${JSON.stringify(data, null, 2)}`, 'info');
+          setStatus('test2-status', false);
+        }
+      } catch (error) {
+        showResult('test2-result', `❌ 数据库连接失败\n\n错误: ${error.message}\n\n可能原因：\n1. D1 数据库表未创建\n2. wrangler.toml 配置错误\n3. D1 绑定失败`, 'error');
+        setStatus('test2-status', false);
+      }
+    }
+
+    async function testPassword() {
+      const password = document.getElementById('testPassword').value;
+
+      if (!password) {
+        showResult('test3-result', '❌ 请输入密码', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${apiUrl}/api/private/verify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password })
+        });
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showResult('test3-result', '✅ 密码验证成功\n\n环境变量 PRIVATE_PASSWORD 已正确设置', 'success');
+          setStatus('test3-status', true);
+        } else {
+          showResult('test3-result', `❌ 密码验证失败\n\n状态码: ${response.status}\n返回: ${JSON.stringify(data, null, 2)}`, 'error');
+          setStatus('test3-status', false);
+        }
+      } catch (error) {
+        showResult('test3-result', `❌ 请求失败\n\n错误: ${error.message}\n\n可能原因：\n1. 环境变量 PRIVATE_PASSWORD 未设置\n2. 部署后未重新部署`, 'error');
+        setStatus('test3-status', false);
+      }
+    }
+
+    async function testBindings() {
+      try {
+        const response = await fetch(`${apiUrl}/api/debug/env`);
+        const data = await response.json();
+
+        let report = '🔍 环境绑定检查结果\n\n';
+        report += `绑定状态:\n`;
+        report += `  DB: ${data.bindings.DB ? '✅ 已绑定' : '❌ 未绑定'}\n`;
+        report += `  NAV_KV: ${data.bindings.NAV_KV ? '✅ 已绑定' : '❌ 未绑定'}\n`;
+        report += `  PRIVATE_PASSWORD: ${data.bindings.PRIVATE_PASSWORD ? '✅ 已设置' : '❌ 未设置'}\n\n`;
+
+        report += `D1 数据库测试:\n`;
+        if (data.testDB) {
+          if (data.testDB.status === 'ok') {
+            report += `  ✅ 数据库连接正常\n`;
+            report += `  表中记录数: ${data.testDB.count}\n`;
+          } else if (data.testDB.status === 'error') {
+            report += `  ⚠️ 错误: ${data.testDB.message}\n`;
+          } else if (data.testDB.status === 'not_bound') {
+            report += `  ❌ ${data.testDB.message}\n`;
+          }
+        }
+
+        report += `\nKV 存储测试:\n`;
+        if (data.testKV) {
+          if (data.testKV.status === 'ok') {
+            report += `  ✅ KV 连接正常\n`;
+          } else if (data.testKV.status === 'error') {
+            report += `  ⚠️ 错误: ${data.testKV.message}\n`;
+          } else if (data.testKV.status === 'not_bound') {
+            report += `  ❌ ${data.testKV.message}\n`;
+          }
+        }
+
+        const allBindingsOk = data.bindings.DB && data.bindings.NAV_KV && data.bindings.PRIVATE_PASSWORD;
+        const dbOk = data.testDB?.status === 'ok';
+
+        showResult('test4-result', report, allBindingsOk && dbOk ? 'success' : 'error');
+        setStatus('test4-status', allBindingsOk && dbOk);
+
+      } catch (error) {
+        showResult('test4-result', `❌ 检查失败\n\n错误: ${error.message}`, 'error');
+        setStatus('test4-status', false);
+      }
+    }
+
+    async function testAddData() {
+      try {
+        const response = await fetch(`${apiUrl}/api/websites/add`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${document.getElementById('testPassword').value}`
+          },
+          body: JSON.stringify({
+            name: '测试网站-' + Date.now(),
+            url: 'https://example.com/' + Date.now(),
+            category: '开发工具',
+            desc: '这是一个测试网站'
+          })
+        });
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showResult('test5-result', `✅ 数据添加成功\n\nID: ${data.id}\n消息: ${data.message}`, 'success');
+          setStatus('test5-status', true);
+        } else {
+          showResult('test5-result', `⚠️ 添加失败\n\n状态码: ${response.status}\n返回: ${JSON.stringify(data, null, 2)}\n\n注意：409 表示网址已存在（正常）`, 'info');
+          setStatus('test5-status', response.status === 409);
+        }
+      } catch (error) {
+        showResult('test5-result', `❌ 添加失败\n\n错误: ${error.message}`, 'error');
+        setStatus('test5-status', false);
+      }
+    }
+  </script>
+</body>
+</html>
