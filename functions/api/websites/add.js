@@ -25,8 +25,8 @@ export async function onRequest(context) {
   }
 
   try {
-    // 插入数据
-    await env.DB.prepare(`
+    // 插入数据并获取结果
+    const result = await env.DB.prepare(`
       INSERT INTO websites (name, url, category, desc, icon_url, lan_url, dark_icon)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(
@@ -39,8 +39,8 @@ export async function onRequest(context) {
       data.darkIcon ? 1 : 0
     ).run()
 
-    // 获取新插入的 ID
-    const lastId = env.DB.meta.last_row_id
+    // 获取新插入的 ID（从结果中获取）
+    const lastId = result.meta.last_row_id
 
     return jsonResponse({
       success: true,
