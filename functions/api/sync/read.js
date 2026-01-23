@@ -23,6 +23,7 @@ export async function onRequest(context) {
     // 从 KV 读取数据
     const favorites = await env.NAV_KV.get(`favorites:${userId}`, 'json')
     const order = await env.NAV_KV.get(`order:${userId}`, 'json')
+    const categoryOrder = await env.NAV_KV.get(`categoryOrder:${userId}`, 'json')
     const visits = await env.NAV_KV.get(`visits:${userId}`, 'json')
     const clicks = await env.NAV_KV.get(`clicks:${userId}`, 'json')
     const timestamp = await env.NAV_KV.get(`timestamp:${userId}`)
@@ -30,6 +31,7 @@ export async function onRequest(context) {
     return jsonResponse({
       favorites: favorites || [],
       order: order || {},
+      categoryOrder: categoryOrder || [],
       visits: visits || {},
       clicks: clicks || {},
       timestamp: timestamp ? parseInt(timestamp) : null

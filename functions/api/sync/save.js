@@ -31,6 +31,7 @@ export async function onRequest(context) {
     // 保存数据到 KV
     await env.NAV_KV.put(`favorites:${userId}`, JSON.stringify(data.favorites))
     await env.NAV_KV.put(`order:${userId}`, JSON.stringify(data.order || {}))
+    await env.NAV_KV.put(`categoryOrder:${userId}`, JSON.stringify(data.categoryOrder || []))
     await env.NAV_KV.put(`visits:${userId}`, JSON.stringify(data.visits || {}))
     await env.NAV_KV.put(`clicks:${userId}`, JSON.stringify(data.clicks || {}))
     await env.NAV_KV.put(`timestamp:${userId}`, timestamp.toString())
