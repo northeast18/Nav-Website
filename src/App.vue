@@ -947,7 +947,9 @@ const handleLogin = async () => {
       localStorage.setItem('syncAuthToken', result.token) // 用用户 token 替换设备 ID
       syncAuthToken.value = result.token
 
-      // 从云端恢复用户数据
+      // 先上传本地数据到云端（防止云端空数据覆盖本地数据）
+      await syncToCloud()
+      // 再从云端恢复数据（此时云端已有最新数据）
       await syncFromCloud()
 
       syncStatus.value = { type: 'success', message: `✅ 欢迎回来，${result.username}！` }
