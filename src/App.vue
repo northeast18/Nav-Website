@@ -988,6 +988,26 @@ const customOrder = ref({}) // 自定义排序 {category: [id1, id2, ...]}
 
 // 从 localStorage 加载数据
 onMounted(async () => {
+  // 检查并清除旧格式的 token（避免同步失败）
+  const oldUserToken = localStorage.getItem('userToken')
+  const oldSyncToken = localStorage.getItem('syncAuthToken')
+
+  // 旧格式 token 包含多个下划线（例如：user_1_1234567890_abc123）
+  // 新格式 token 只有单个下划线（例如：user_1）
+  const isOldTokenFormat = (token) => token && token.split('_').length > 2
+
+  if (isOldTokenFormat(oldUserToken) || isOldTokenFormat(oldSyncToken)) {
+    console.log('🔄 检测到旧格式 token，正在清除...')
+    localStorage.removeItem('userToken')
+    localStorage.removeItem('syncAuthToken')
+    localStorage.removeItem('currentUser')
+    userToken.value = ''
+    syncAuthToken.value = ''
+    currentUser.value = null
+    isLoggedIn.value = false
+    console.log('✓ 旧 token 已清除，请重新登录')
+  }
+
   // 加载导航网站数据（从 D1 数据库）
   try {
     navItems.value = await fetchNavItems()
