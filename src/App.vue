@@ -533,7 +533,7 @@ const toggleCategoryEditMode = () => {
   if (!isCategoryEditModeActive.value) {
     // 退出编辑模式时保存顺序
     saveCategoryOrder()
-    // 自动触发云同步
+    // 自动触发云同步（从 localStorage 读取最新值）
     syncToCloud()
   }
 }
@@ -1027,6 +1027,9 @@ const cancelEditId = () => {
 const syncToCloud = async () => {
   isSyncing.value = true
   try {
+    // 从 localStorage 读取最新的分类顺序（确保是最新值）
+    const latestCategoryOrder = JSON.parse(localStorage.getItem('navCategoryOrder') || '[]')
+
     const response = await fetch(`${API_BASE}/api/sync/save`, {
       method: 'POST',
       headers: {
@@ -1036,7 +1039,7 @@ const syncToCloud = async () => {
       body: JSON.stringify({
         favorites: [...favorites.value],
         order: customOrder.value,
-        categoryOrder: categoryOrder.value,
+        categoryOrder: latestCategoryOrder,  // 使用从 localStorage 读取的最新值
         visits: visitHistory.value,
         clicks: clickCounts.value,
         timestamp: Date.now()
