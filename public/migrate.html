@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据迁移工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 500;
+    }
+    input[type="password"],
+    input[type="url"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+    }
+    #result.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    #result.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .progress {
+      margin-top: 20px;
+      display: none;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s;
+      width: 0%;
+    }
+    .progress-text {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+    }
+    .note {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+    .note strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 数据迁移工具</h1>
+    <p class="subtitle">将 data.backup.js 数据迁移到 D1 数据库</p>
+
+    <div class="note">
+      <strong>⚠️ 重要提示</strong>
+      此工具仅在首次部署时使用。如果数据库已有数据，再次执行会自动跳过已存在的记录。
+    </div>
+
+    <form id="migrateForm">
+      <div class="form-group">
+        <label for="password">管理员密码</label>
+        <input type="password" id="password" placeholder="输入你的私密密码" required>
+      </div>
+
+      <button type="submit" id="migrateBtn">开始迁移</button>
+    </form>
+
+    <div class="progress" id="progress">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">准备中...</div>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script type="module">
+    // 从 data.backup.js 导入数据
+    const dataModule = await import('/src/data.backup.js');
+    const { navItems } = dataModule;
+
+    const form = document.getElementById('migrateForm');
+    const migrateBtn = document.getElementById('migrateBtn');
+    const resultDiv = document.getElementById('result');
+    const progressDiv = document.getElementById('progress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const apiUrl = window.location.origin;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const password = document.getElementById('password').value;
+
+      // 禁用按钮
+      migrateBtn.disabled = true;
+      migrateBtn.textContent = '迁移中...';
+
+      // 显示进度
+      progressDiv.style.display = 'block';
+      resultDiv.style.display = 'none';
+
+      try {
+        // 逐个迁移每个网站
+        let migrated = 0;
+        let skipped = 0;
+        let errors = 0;
+
+        const totalItems = navItems.reduce((sum, cat) => sum + cat.items.length, 0);
+
+        for (const category of navItems) {
+          for (const item of category.items) {
+            try {
+              const response = await fetch(`${apiUrl}/api/websites/add`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${password}`
+                },
+                body: JSON.stringify({
+                  name: item.name,
+                  url: item.url,
+                  category: category.category,
+                  desc: item.desc || '',
+                  iconUrl: item.iconUrl || '',
+                  lanUrl: item.lanUrl || null,
+                  darkIcon: item.darkIcon || false
+                })
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                  migrated++;
+                }
+              } else if (response.status === 409) {
+                // 409 Conflict - 网址已存在
+                skipped++;
+              } else if (response.status === 401) {
+                throw new Error('密码错误，请检查环境变量 PRIVATE_PASSWORD');
+              } else {
+                errors++;
+              }
+
+              // 更新进度
+              const progress = Math.round(((migrated + skipped + errors) / totalItems) * 100);
+              progressFill.style.width = `${progress}%`;
+              progressText.textContent = `进度: ${migrated + skipped + errors}/${totalItems} (${progress}%)`;
+
+              // 避免请求过快
+              await new Promise(resolve => setTimeout(resolve, 100));
+
+            } catch (error) {
+              console.error(`迁移失败: ${item.name}`, error);
+              errors++;
+            }
+          }
+        }
+
+        // 显示结果
+        resultDiv.className = errors > 0 ? 'error' : 'success';
+        resultDiv.innerHTML = `
+          <h3>${errors > 0 ? '⚠️ 迁移完成（有错误）' : '✅ 迁移成功'}</h3>
+          <p><strong>新增:</strong> ${migrated} 条</p>
+          <p><strong>跳过:</strong> ${skipped} 条（已存在）</p>
+          <p><strong>错误:</strong> ${errors} 条</p>
+          <p><strong>总计:</strong> ${migrated + skipped} 条</p>
+          ${errors > 0 ? '<p style="margin-top: 10px; font-size: 12px;">部分数据迁移失败，请检查控制台查看详细错误</p>' : ''}
+        `;
+        resultDiv.style.display = 'block';
+
+      } catch (error) {
+        resultDiv.className = 'error';
+        resultDiv.innerHTML = `
+          <h3>❌ 迁移失败</h3>
+          <p>${error.message}</p>
+        `;
+        resultDiv.style.display = 'block';
+      } finally {
+        migrateBtn.disabled = false;
+        migrateBtn.textContent = '重新迁移';
+        progressText.textContent = '迁移完成！';
+      }
+    });
+  </script>
+</body>
+</html>
