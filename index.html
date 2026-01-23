@@ -13,5 +13,18 @@
 <body>
   <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
+  <!-- 移动端调试工具（仅在开发环境使用） -->
+  <script>
+    // 检测 URL 参数，如果有 debug=true 则加载 eruda
+    if (window.location.search.includes('debug=true')) {
+      const script = document.createElement('script')
+      script.src = '//cdn.jsdelivr.net/npm/eruda'
+      document.body.appendChild(script)
+      script.onload = function() {
+        eruda.init()
+        console.log('🔧 Eruda 调试工具已启用')
+      }
+    }
+  </script>
 </body>
 </html>
