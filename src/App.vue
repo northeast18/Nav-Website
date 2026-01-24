@@ -1134,7 +1134,9 @@ const sortedNavItems = computed(() => {
     ? tempCategoryOrder.value
     : categoryOrder.value
 
-  const items = navItems.value
+  // 过滤掉友情链接分类（友情链接仅在底部显示，不在主分类栏）
+  const items = navItems.value.filter(item => item.category !== '友情链接')
+
   if (order.length === 0) {
     return items
   }
