@@ -1377,6 +1377,14 @@ onMounted(async () => {
     console.error('✗ 导航数据加载失败:', error)
   }
 
+  // 监听网页可见性变化（从其他标签页切回来时自动刷新数据）
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible') {
+      console.log('🔄 页面重新可见，自动刷新数据...')
+      await refreshNavData()
+    }
+  })
+
   const savedVersion = localStorage.getItem('navDataVersion')
   const saved = localStorage.getItem('navClickCounts')
   const savedFavorites = localStorage.getItem('navFavorites')
