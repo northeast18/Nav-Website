@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "导航网站收藏助手",
-  "version": "1.0.0",
-  "description": "快速收藏网站到你的个人导航，支持从浏览器书签导入",
+  "version": "2.0.0",
+  "description": "快速收藏网站到你的个人导航，支持账号登录同步",
   "permissions": [
     "storage",
     "contextMenus",

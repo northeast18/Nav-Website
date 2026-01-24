@@ -2,14 +2,13 @@
 
 // 分类列表（与网站分类保持一致）
 const CATEGORIES = [
-  { id: '我的服务', name: '我的服务' },
-  { id: '云服务和服务器', name: '云服务和服务器' },
-  { id: '开发工具', name: '开发工具' },
-  { id: '邮箱和域名', name: '邮箱和域名' },
   { id: 'AI工具', name: 'AI工具' },
-  { id: '常用网站', name: '常用网站' },
+  { id: '云服务和服务器', name: '云服务和服务器' },
   { id: '互联网工具', name: '互联网工具' },
   { id: '娱乐', name: '娱乐' },
+  { id: '常用网站', name: '常用网站' },
+  { id: '邮箱和域名', name: '邮箱和域名' },
+  { id: '我的服务', name: '我的服务' },
   { id: '私密', name: '私密' }
 ]
 
@@ -41,7 +40,7 @@ chrome.runtime.onInstalled.addListener(() => {
   // 为每个分类创建子菜单
   CATEGORIES.forEach(category => {
     chrome.contextMenus.create({
-      id: `category-${category.id}`,
+      id: 'category-' + category.id,
       parentId: 'saveToNav',
       title: category.name,
       contexts: ['page', 'link']
@@ -71,29 +70,45 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 })
 
+// 监听来自 popup 的消息
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'quickSave') {
+    quickSave(request.url, request.title, sender.tab)
+    return true
+  }
+  return false
+})
+
 // 快速收藏
 async function quickSave(url, title, tab) {
   try {
-    // 检查是否已配置同步 ID
-    const { syncId, apiUrl, defaultCategory } = await chrome.storage.local.get([
-      'syncId',
+    // 检查是否已登录
+    const { userToken, currentUser, apiUrl, defaultCategory } = await chrome.storage.local.get([
+      'userToken',
+      'currentUser',
       'apiUrl',
       'defaultCategory'
     ])
 
-    if (!syncId) {
-      showNotification('请先配置同步 ID', '点击设置进行配置', () => {
+    if (!userToken || !currentUser) {
+      showNotification('请先登录', '请在扩展设置中登录账号', () => {
+        chrome.runtime.openOptionsPage()
+      })
+      return
+    }
+
+    if (!apiUrl) {
+      showNotification('请先配置 API 地址', '请在扩展设置中配置 API 地址', () => {
         chrome.runtime.openOptionsPage()
       })
       return
     }
 
     // 提取图标
-    const iconUrl = `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`
+    const iconUrl = 'https://www.google.com/s2/favicons?domain=' + new URL(url).hostname + '&sz=128'
 
     // 构造收藏数据
     const favorite = {
-      id: generateId(),
       name: title || new URL(url).hostname,
       url: url,
       desc: '',
@@ -101,10 +116,23 @@ async function quickSave(url, title, tab) {
       category: defaultCategory || '私密'
     }
 
-    // 保存到服务器
-    await saveToServer([favorite], syncId, apiUrl)
+    // 调用添加网站 API
+    const response = await fetch(apiUrl + '/api/websites/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + userToken
+      },
+      body: JSON.stringify(favorite)
+    })
 
-    showNotification('收藏成功', `"${favorite.name}" 已添加到导航`)
+    const result = await response.json()
+
+    if (response.ok && result.success) {
+      showNotification('收藏成功', '"' + favorite.name + '" 已添加到导航')
+    } else {
+      throw new Error(result.error || '收藏失败')
+    }
 
   } catch (error) {
     console.error('快速收藏失败:', error)
@@ -115,22 +143,32 @@ async function quickSave(url, title, tab) {
 // 保存到指定分类
 async function saveToCategory(url, title, category, tab) {
   try {
-    // 检查是否已配置同步 ID
-    const { syncId, apiUrl } = await chrome.storage.local.get(['syncId', 'apiUrl'])
+    // 检查是否已登录
+    const { userToken, currentUser, apiUrl } = await chrome.storage.local.get([
+      'userToken',
+      'currentUser',
+      'apiUrl'
+    ])
 
-    if (!syncId) {
-      showNotification('请先配置同步 ID', '点击设置进行配置', () => {
+    if (!userToken || !currentUser) {
+      showNotification('请先登录', '请在扩展设置中登录账号', () => {
+        chrome.runtime.openOptionsPage()
+      })
+      return
+    }
+
+    if (!apiUrl) {
+      showNotification('请先配置 API 地址', '请在扩展设置中配置 API 地址', () => {
         chrome.runtime.openOptionsPage()
       })
       return
     }
 
     // 提取图标
-    const iconUrl = `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`
+    const iconUrl = 'https://www.google.com/s2/favicons?domain=' + new URL(url).hostname + '&sz=128'
 
     // 构造收藏数据
     const favorite = {
-      id: generateId(),
       name: title || new URL(url).hostname,
       url: url,
       desc: '',
@@ -138,39 +176,28 @@ async function saveToCategory(url, title, category, tab) {
       category: category
     }
 
-    // 保存到服务器
-    await saveToServer([favorite], syncId, apiUrl)
+    // 调用添加网站 API
+    const response = await fetch(apiUrl + '/api/websites/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + userToken
+      },
+      body: JSON.stringify(favorite)
+    })
 
-    showNotification('收藏成功', `"${favorite.name}" 已添加到「${category}」`)
+    const result = await response.json()
+
+    if (response.ok && result.success) {
+      showNotification('收藏成功', '"' + favorite.name + '" 已添加到「' + category + '」')
+    } else {
+      throw new Error(result.error || '收藏失败')
+    }
 
   } catch (error) {
     console.error('分类收藏失败:', error)
     showNotification('收藏失败', error.message)
   }
-}
-
-// 保存到服务器
-async function saveToServer(favorites, syncId, customApiUrl) {
-  const apiUrl = customApiUrl || 'http://localhost:5173/api/sync/save'
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${syncId}`
-    },
-    body: JSON.stringify({
-      favorites: favorites,
-      append: true // 追加模式
-    })
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error || '保存失败')
-  }
-
-  return await response.json()
 }
 
 // 显示通知
@@ -195,9 +222,4 @@ function showNotification(title, message, callback) {
       })
     }
   })
-}
-
-// 生成唯一 ID
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2)
 }

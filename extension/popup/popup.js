@@ -1,17 +1,18 @@
 // Popup 脚本
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 检查配置状态
-  const { syncId } = await chrome.storage.local.get(['syncId'])
-  updateStatus(syncId)
+  // 检查登录状态
+  await checkLoginStatus()
 
   // 收藏当前页面
   document.getElementById('savePage').addEventListener('click', async () => {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 
-      if (!syncId) {
-        showStatus('请先配置同步 ID', 'error')
+      const { userToken, currentUser } = await chrome.storage.local.get(['userToken', 'currentUser'])
+
+      if (!userToken || !currentUser) {
+        showStatus('请先登录账号', 'error')
         setTimeout(() => chrome.runtime.openOptionsPage(), 1500)
         return
       }
@@ -31,9 +32,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   // 导入书签
-  document.getElementById('importBookmarks').addEventListener('click', () => {
-    if (!syncId) {
-      showStatus('请先配置同步 ID', 'error')
+  document.getElementById('importBookmarks').addEventListener('click', async () => {
+    const { userToken, currentUser } = await chrome.storage.local.get(['userToken', 'currentUser'])
+
+    if (!userToken || !currentUser) {
+      showStatus('请先登录账号', 'error')
       setTimeout(() => chrome.runtime.openOptionsPage(), 1500)
       return
     }
@@ -48,21 +51,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 })
 
-// 更新状态显示
-function updateStatus(syncId) {
+// 检查登录状态
+async function checkLoginStatus() {
+  const { userToken, currentUser } = await chrome.storage.local.get(['userToken', 'currentUser'])
+
   const statusEl = document.getElementById('status')
 
-  if (syncId) {
-    statusEl.innerHTML = '<span class="success">✓ 已配置</span>'
+  if (userToken && currentUser) {
+    statusEl.innerHTML = '<span class="success">✓ ' + currentUser.username + '</span>'
   } else {
-    statusEl.innerHTML = '<span class="warning">⚠ 未配置同步 ID</span>'
+    statusEl.innerHTML = '<span class="warning">⚠ 未登录</span>'
   }
 }
 
 // 显示状态消息
 function showStatus(message, type = 'info') {
   const statusEl = document.getElementById('status')
-  statusEl.innerHTML = `<span class="${type}">${message}</span>`
+  statusEl.innerHTML = '<span class="' + type + '">' + message + '</span>'
 
   setTimeout(() => {
     if (type === 'success') {

@@ -51,10 +51,16 @@ export async function onRequest(context) {
     ).bind(username, passwordHash).run()
 
     if (result.success) {
+      const userId = result.meta.last_row_id
+      // 使用与登录相同的 token 格式
+      const token = `user_${userId}`
+
       return jsonResponse({
         success: true,
         message: '注册成功',
-        userId: result.meta.last_row_id
+        token: token,
+        userId: userId,
+        username: username
       })
     } else {
       return jsonResponse({ error: '注册失败' }, 500)
