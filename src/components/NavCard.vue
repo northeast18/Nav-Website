@@ -1,7 +1,7 @@
 <template>
   <div
     @click="handleClick"
-    @contextmenu.prevent="toggleFavorite"
+    @contextmenu.prevent="handleContextMenu"
     class="group relative flex flex-col items-center justify-center py-1.5 sm:py-2 px-0 rounded-xl border transition-all duration-500 cursor-pointer h-full overflow-hidden"
     :class="[
       isFavorite ? 'bg-gradient-to-br from-purple-900/40 to-pink-900/40 border-pink-500/50 shadow-lg shadow-pink-500/20' : 'bg-gray-900/60 border-white/10 hover:border-purple-400/50',
@@ -123,7 +123,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['toggle-favorite', 'record-visit'])
+const emit = defineEmits(['toggle-favorite', 'record-visit', 'contextmenu'])
 
 const showModal = ref(false)
 const imageLoadError = ref(false)
@@ -152,6 +152,11 @@ const handleLinkClick = () => {
 
 const toggleFavorite = () => {
   emit('toggle-favorite', props.item)
+}
+
+const handleContextMenu = (event) => {
+  // 发送右键菜单事件到父组件
+  emit('contextmenu', { event, item: props.item })
 }
 
 const iconSrc = computed(() => {

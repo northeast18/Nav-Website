@@ -39,45 +39,155 @@ export async function fetchNavItems() {
 }
 
 /**
- * 获取空数据结构（降级使用）
+ * 获取示例数据结构（用于首次部署或模板）
  */
 function getEmptyNavItems() {
   return [
     {
-      category: '我的服务',
-      items: []
+      category: 'AI工具',
+      items: [
+        {
+          id: 1,
+          name: 'DeepSeek',
+          url: 'https://deepseek.com',
+          desc: '国产 AI 搜索引擎',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        },
+        {
+          id: 2,
+          name: '硅基流动',
+          url: 'https://siliconflow.cn',
+          desc: 'AI 模型服务平台',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        }
+      ]
     },
     {
       category: '云服务和服务器',
-      items: []
-    },
-    {
-      category: '开发工具',
-      items: []
-    },
-    {
-      category: '邮箱和域名',
-      items: []
-    },
-    {
-      category: 'AI工具',
-      items: []
-    },
-    {
-      category: '常用网站',
-      items: []
+      items: [
+        {
+          id: 3,
+          name: '阿里云',
+          url: 'https://aliyun.com',
+          desc: '云计算服务平台',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        },
+        {
+          id: 4,
+          name: '腾讯云',
+          url: 'https://cloud.tencent.com',
+          desc: '云服务提供商',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        }
+      ]
     },
     {
       category: '互联网工具',
-      items: []
+      items: [
+        {
+          id: 5,
+          name: 'Gitee',
+          url: 'https://gitee.com',
+          desc: '国产代码托管平台',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        },
+        {
+          id: 6,
+          name: 'CSDN',
+          url: 'https://csdn.net',
+          desc: '开发者社区',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        }
+      ]
     },
     {
       category: '娱乐',
-      items: []
+      items: [
+        {
+          id: 7,
+          name: '抖音',
+          url: 'https://douyin.com',
+          desc: '短视频平台',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        },
+        {
+          id: 8,
+          name: 'Bilibili',
+          url: 'https://bilibili.com',
+          desc: '弹幕视频网站',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        }
+      ]
+    },
+    {
+      category: '常用网站',
+      items: [
+        {
+          id: 9,
+          name: '百度',
+          url: 'https://baidu.com',
+          desc: '搜索引擎',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        },
+        {
+          id: 10,
+          name: '腾讯',
+          url: 'https://qq.com',
+          desc: '门户网站',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        }
+      ]
+    },
+    {
+      category: '邮箱和域名',
+      items: [
+        {
+          id: 11,
+          name: 'QQ邮箱',
+          url: 'https://mail.qq.com',
+          desc: 'QQ 邮箱',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        },
+        {
+          id: 12,
+          name: '网易邮箱',
+          url: 'https://mail.163.com',
+          desc: '网易邮箱',
+          iconUrl: '',
+          lanUrl: '',
+          darkIcon: false
+        }
+      ]
+    },
+    {
+      category: '我的服务',
+      items: []  // 留空，个人数据
     },
     {
       category: '私密',
-      items: []
+      items: []  // 留空，需要密码
     }
   ]
 }
@@ -98,6 +208,17 @@ export const searchEngines = [
     name: 'Baidu',
     url: 'https://www.baidu.com/s?wd=',
     icon: 'https://www.baidu.com/favicon.ico'
+  },
+  {
+    name: 'GitHub',
+    url: 'https://github.com/search?q=',
+    icon: 'https://github.com/favicon.ico'
+  },
+  {
+    name: '🔍 导航搜索',
+    url: 'local://nav-search',
+    icon: '',
+    isLocal: true  // 标记为本地搜索
   }
 ]
 

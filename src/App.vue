@@ -50,6 +50,17 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
               </svg>
             </button>
+
+            <!-- 导入书签按钮 -->
+            <button
+              @click="showBookmarkImport = true"
+              class="p-1.5 rounded-full transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center bg-gradient-to-r from-green-600/80 to-emerald-600/80 border-green-500/50 text-white hover:shadow-lg hover:shadow-green-500/30 hover:scale-110"
+              title="导入书签"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </button>
           </div>
 
           <!-- 同步状态指示器 -->
@@ -222,9 +233,19 @@
               :last-visit="lastVisitTime(item.url)"
               @toggle-favorite="toggleFavorite"
               @record-visit="recordVisit"
+              @contextmenu="handleCardContextMenu"
             />
           </template>
         </draggable>
+
+        <!-- 右键菜单 -->
+        <ContextMenu
+          :visible="contextMenuVisible"
+          :x="contextMenuX"
+          :y="contextMenuY"
+          :items="contextMenuItems"
+          @close="closeContextMenu"
+        />
       </div>
 
       <!-- 拖拽控制按钮（仅在启用拖拽时显示） -->
@@ -532,6 +553,122 @@
     <!-- 8. 主题设置弹窗 -->
     <ThemeModal :show="showThemeModal" @close="showThemeModal = false" />
 
+    <!-- 9. 编辑网站弹窗 -->
+    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showEditModal = false">
+      <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+
+      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-md transform transition-all">
+        <!-- 光效背景 -->
+        <div class="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-pink-600/10 rounded-3xl pointer-events-none"></div>
+
+        <div class="relative z-10">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              编辑网站
+            </h3>
+            <button @click="showEditModal = false" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-xl">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <!-- 名称 -->
+            <div>
+              <label class="block text-gray-400 text-sm mb-2">名称</label>
+              <input
+                v-model="editForm.name"
+                type="text"
+                class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                placeholder="请输入网站名称"
+              >
+            </div>
+
+            <!-- URL -->
+            <div>
+              <label class="block text-gray-400 text-sm mb-2">网址</label>
+              <input
+                v-model="editForm.url"
+                type="text"
+                class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                placeholder="https://example.com"
+              >
+            </div>
+
+            <!-- 内网地址 -->
+            <div>
+              <label class="block text-gray-400 text-sm mb-2">内网地址（可选）</label>
+              <input
+                v-model="editForm.lanUrl"
+                type="text"
+                class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                placeholder="http://192.168.1.1"
+              >
+            </div>
+
+            <!-- 描述 -->
+            <div>
+              <label class="block text-gray-400 text-sm mb-2">描述</label>
+              <input
+                v-model="editForm.desc"
+                type="text"
+                class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                placeholder="简短描述"
+              >
+            </div>
+
+            <!-- 图标URL -->
+            <div>
+              <label class="block text-gray-400 text-sm mb-2">图标 URL（可选）</label>
+              <input
+                v-model="editForm.iconUrl"
+                type="text"
+                class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                placeholder="https://example.com/icon.png"
+              >
+            </div>
+
+            <!-- 暗黑图标 -->
+            <div class="flex items-center gap-2">
+              <input
+                v-model="editForm.darkIcon"
+                type="checkbox"
+                id="darkIcon"
+                class="w-4 h-4 rounded border-white/10 bg-gray-900/50 text-purple-500 focus:ring-purple-500/50"
+              >
+              <label for="darkIcon" class="text-gray-400 text-sm">图标是深色的，需要反色显示</label>
+            </div>
+
+            <!-- 按钮 -->
+            <div class="flex gap-3 pt-2">
+              <button
+                @click="showEditModal = false"
+                class="flex-1 px-4 py-3 bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-xl transition-colors"
+              >
+                取消
+              </button>
+              <button
+                @click="saveEdit"
+                class="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 font-medium"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. 书签导入弹窗 -->
+    <BookmarkImport
+      :show="showBookmarkImport"
+      :categories="navItems.map(item => item.category)"
+      @close="showBookmarkImport = false"
+      @refresh="refreshNavData"
+    />
+
   </div>
 </template>
 
@@ -542,6 +679,8 @@ import draggable from 'vuedraggable'
 import { fetchNavItems, searchEngines, friendLinks } from './data'
 import NavCard from './components/NavCard.vue'
 import ThemeModal from './components/ThemeModal.vue'
+import ContextMenu from './components/ContextMenu.vue'
+import BookmarkImport from './components/BookmarkImport.vue'
 import { useTheme } from './composables/useTheme'
 
 // 初始化主题系统
@@ -552,11 +691,32 @@ const navItems = ref([])  // 改为响应式数组
 const activeCategory = ref('frequent')
 const searchQuery = ref('')
 const showEngineList = ref(false)
+const isNavSearchMode = ref(false)  // 是否处于导航搜索模式
 const showFriendModal = ref(false) // 控制友链弹窗
 const showPasswordModal = ref(false) // 控制密码弹窗
 const showSyncModal = ref(false) // 控制同步弹窗
 const showThemeModal = ref(false) // 控制主题弹窗
+const showEditModal = ref(false) // 控制编辑弹窗
+const showBookmarkImport = ref(false) // 控制书签导入弹窗
 const passwordInput = ref('') // 密码输入
+
+// === 右键菜单状态 ===
+const contextMenuVisible = ref(false)
+const contextMenuX = ref(0)
+const contextMenuY = ref(0)
+const contextMenuItem = ref(null)
+
+// === 编辑表单状态 ===
+const editForm = ref({
+  id: null,
+  name: '',
+  url: '',
+  desc: '',
+  iconUrl: '',
+  lanUrl: '',
+  darkIcon: false,
+  category: ''
+})
 const passwordError = ref(false) // 密码错误提示
 const isPrivateUnlocked = ref(false) // 私密分类是否已解锁
 const currentEngine = ref(searchEngines[0])
@@ -1165,6 +1325,182 @@ const cancelPassword = () => {
   passwordError.value = false
 }
 
+// === 书签导入处理 ===
+// 刷新导航数据
+const refreshNavData = async () => {
+  try {
+    navItems.value = await fetchNavItems()
+    console.log('✓ 数据已刷新')
+  } catch (error) {
+    console.error('✗ 刷新数据失败:', error)
+  }
+}
+
+// === 网页卡片右键菜单处理 ===
+// 处理右键菜单事件
+const handleCardContextMenu = ({ event, item }) => {
+  contextMenuItem.value = item
+  contextMenuX.value = event.clientX
+  contextMenuY.value = event.clientY
+  contextMenuVisible.value = true
+}
+
+// 关闭右键菜单
+const closeContextMenu = () => {
+  contextMenuVisible.value = false
+  contextMenuItem.value = null
+}
+
+// 获取右键菜单项
+const contextMenuItems = computed(() => {
+  if (!contextMenuItem.value) return []
+
+  // 生成移动到其他分类的子菜单
+  const moveSubmenu = navItems.value
+    .filter(cat => cat.category !== contextMenuItem.value?.category)
+    .map(cat => ({
+      label: cat.category,
+      action: () => moveWebsiteToCategory(contextMenuItem.value, cat.category)
+    }))
+
+  return [
+    {
+      label: '编辑',
+      action: () => openEditModal(contextMenuItem.value)
+    },
+    {
+      label: '移动到...',
+      submenu: moveSubmenu
+    },
+    {
+      label: '删除',
+      action: () => deleteWebsite(contextMenuItem.value)
+    }
+  ]
+})
+
+// 打开编辑弹窗
+const openEditModal = (item) => {
+  editForm.value = {
+    id: item.id,
+    name: item.name,
+    url: item.url,
+    desc: item.desc || '',
+    iconUrl: item.iconUrl || '',
+    lanUrl: item.lanUrl || '',
+    darkIcon: item.darkIcon || false,
+    category: activeCategory.value === 'nav-search' || activeCategory.value === 'frequent' || activeCategory.value === 'favorites'
+      ? navItems.value.find(cat => cat.items.some(i => i.id === item.id))?.category || ''
+      : activeCategory.value
+  }
+  showEditModal.value = true
+}
+
+// 保存编辑
+const saveEdit = async () => {
+  const adminPassword = prompt('请输入管理员密码：')
+
+  if (!adminPassword) return
+
+  try {
+    const response = await fetch('/api/websites/update', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminPassword}`
+      },
+      body: JSON.stringify(editForm.value)
+    })
+
+    const result = await response.json()
+
+    if (response.ok && result.success) {
+      alert(result.message || '保存成功')
+      showEditModal.value = false
+      // 重新加载数据
+      navItems.value = await fetchNavItems()
+    } else {
+      alert('保存失败：' + (result.error || result.message))
+    }
+  } catch (error) {
+    alert('保存失败：' + error.message)
+  }
+}
+
+// 删除网站
+const deleteWebsite = async (item) => {
+  const confirmed = confirm(`确定要删除「${item.name}」吗？`)
+
+  if (!confirmed) return
+
+  const adminPassword = prompt('请输入管理员密码：')
+
+  if (!adminPassword) return
+
+  try {
+    const response = await fetch('/api/websites/delete', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminPassword}`
+      },
+      body: JSON.stringify({ id: item.id })
+    })
+
+    const result = await response.json()
+
+    if (response.ok && result.success) {
+      alert(result.message || '删除成功')
+      // 重新加载数据
+      navItems.value = await fetchNavItems()
+    } else {
+      alert('删除失败：' + (result.error || result.message))
+    }
+  } catch (error) {
+    alert('删除失败：' + error.message)
+  }
+}
+
+// 移动网站到其他分类
+const moveWebsiteToCategory = async (item, targetCategory) => {
+  const adminPassword = prompt('请输入管理员密码：')
+
+  if (!adminPassword) return
+
+  try {
+    const response = await fetch('/api/websites/update', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminPassword}`
+      },
+      body: JSON.stringify({
+        id: item.id,
+        name: item.name,
+        url: item.url,
+        desc: item.desc || '',
+        iconUrl: item.iconUrl || '',
+        lanUrl: item.lanUrl || '',
+        darkIcon: item.darkIcon || false,
+        category: targetCategory
+      })
+    })
+
+    const result = await response.json()
+
+    if (response.ok && result.success) {
+      syncStatus.value = { type: 'success', message: `✅ 已移动到「${targetCategory}」` }
+      setTimeout(() => syncStatus.value = null, 2000)
+      // 重新加载数据
+      navItems.value = await fetchNavItems()
+    } else {
+      alert('移动失败：' + (result.error || result.message))
+    }
+  } catch (error) {
+    alert('移动失败：' + error.message)
+  }
+}
+
 // === 云同步功能 ===
 // 保存同步 token
 watch(syncAuthToken, () => {
@@ -1365,9 +1701,23 @@ const sortItemsByCustomOrder = (items, categoryKey) => {
 const switchEngine = (engine) => {
   currentEngine.value = engine
   showEngineList.value = false
+
+  // 检查是否选择了导航搜索
+  isNavSearchMode.value = engine.isLocal === true
+
+  // 如果切换到导航搜索，自动切换到"常用"分类以显示所有结果
+  if (isNavSearchMode.value) {
+    activeCategory.value = 'nav-search'
+  } else if (activeCategory.value === 'nav-search') {
+    // 如果从导航搜索切换到其他引擎，恢复到"常用"分类
+    activeCategory.value = 'frequent'
+  }
 }
 
 const handleSearch = () => {
+  // 如果是导航搜索模式，不执行外部搜索
+  if (isNavSearchMode.value) return
+
   if (!searchQuery.value) return
   window.open(currentEngine.value.url + encodeURIComponent(searchQuery.value), '_blank')
 }
@@ -1393,7 +1743,16 @@ const filteredItems = computed(() => {
   let items = []
   let categoryKey = activeCategory.value
 
-  if (activeCategory.value === 'frequent') {
+  if (activeCategory.value === 'nav-search') {
+    // 导航搜索模式：跨所有分类搜索
+    navItems.value.forEach(category => {
+      // 跳过私密分类（未解锁时）
+      if (category.category === '私密' && !isPrivateUnlocked.value) {
+        return
+      }
+      items = items.concat(category.items)
+    })
+  } else if (activeCategory.value === 'frequent') {
     // 常用：显示最常访问的网站
     navItems.value.forEach(category => items = items.concat(category.items))
     // 按点击次数排序，取前 16 个
@@ -1434,6 +1793,7 @@ const filteredItems = computed(() => {
     }
   }
 
+  // 搜索过滤
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     items = items.filter(item =>
@@ -1441,12 +1801,13 @@ const filteredItems = computed(() => {
       (item.desc && item.desc.toLowerCase().includes(query))
     )
   }
+
   return items
 })
 
-// 是否启用拖拽（常用分类不启用拖拽，因为它是动态生成的）
+// 是否启用拖拽（常用分类和导航搜索不启用拖拽）
 const enableDrag = computed(() => {
-  return activeCategory.value !== 'frequent'
+  return activeCategory.value !== 'frequent' && activeCategory.value !== 'nav-search'
 })
 
 // 监听 activeCategory 变化，更新拖拽数组
