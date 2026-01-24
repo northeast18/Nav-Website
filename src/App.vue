@@ -1818,37 +1818,70 @@ const moveWebsiteToCategory = async (item, targetCategory) => {
   if (!adminPassword) return
 
   try {
-    const response = await fetch('/api/websites/update', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminPassword}`
-      },
-      body: JSON.stringify({
-        id: item.id,
-        name: item.name,
-        url: item.url,
-        desc: item.desc || '',
-        iconUrl: item.iconUrl || '',
-        lanUrl: item.lanUrl || '',
-        darkIcon: item.darkIcon || false,
-        category: targetCategory
+    // 特殊处理：移动到友情链接时，执行复制操作（保留原记录）
+    if (targetCategory === '友情链接') {
+      const response = await fetch('/api/websites/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminPassword}`
+        },
+        body: JSON.stringify({
+          name: item.name,
+          url: item.url,
+          desc: item.desc || '',
+          iconUrl: item.iconUrl || '',
+          lanUrl: item.lanUrl || '',
+          darkIcon: item.darkIcon || false,
+          category: '友情链接'
+        })
       })
-    })
 
-    const result = await response.json()
+      const result = await response.json()
 
-    if (response.ok && result.success) {
-      syncStatus.value = { type: 'success', message: `✅ 已移动到「${targetCategory}」` }
-      setTimeout(() => syncStatus.value = null, 2000)
-      // 重新加载数据
-      await refreshNavData()
+      if (response.ok && result.success) {
+        syncStatus.value = { type: 'success', message: `✅ 已复制到「友情链接」` }
+        setTimeout(() => syncStatus.value = null, 2000)
+        // 重新加载数据
+        await refreshNavData()
+      } else {
+        if (response.status === 401) clearAdminPasswordCache()
+        alert('复制失败：' + (result.error || result.message))
+      }
     } else {
-      if (response.status === 401) clearAdminPasswordCache()
-      alert('移动失败：' + (result.error || result.message))
+      // 正常移动：更新现有记录的分类
+      const response = await fetch('/api/websites/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminPassword}`
+        },
+        body: JSON.stringify({
+          id: item.id,
+          name: item.name,
+          url: item.url,
+          desc: item.desc || '',
+          iconUrl: item.iconUrl || '',
+          lanUrl: item.lanUrl || '',
+          darkIcon: item.darkIcon || false,
+          category: targetCategory
+        })
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        syncStatus.value = { type: 'success', message: `✅ 已移动到「${targetCategory}」` }
+        setTimeout(() => syncStatus.value = null, 2000)
+        // 重新加载数据
+        await refreshNavData()
+      } else {
+        if (response.status === 401) clearAdminPasswordCache()
+        alert('移动失败：' + (result.error || result.message))
+      }
     }
   } catch (error) {
-    alert('移动失败：' + error.message)
+    alert('操作失败：' + error.message)
   }
 }
 
