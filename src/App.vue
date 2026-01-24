@@ -689,11 +689,69 @@
       @refresh="refreshNavData"
     />
 
+    <!-- 11. 管理员密码确认弹窗 -->
+    <div v-if="showAdminAuthModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="cancelAdminAuth">
+      <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+      
+      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-sm transform transition-all">
+        <!-- 光效背景 -->
+        <div class="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-blue-600/10 rounded-3xl pointer-events-none"></div>
+
+        <div class="relative z-10">
+          <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            验证管理员身份
+          </h3>
+
+          <div class="mb-6 relative">
+            <input
+              v-model="adminAuthPassword"
+              :type="showAdminPassword ? 'text' : 'password'"
+              class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all pr-12"
+              placeholder="请输入管理员密码"
+              @keyup.enter="confirmAdminAuth"
+              ref="adminPasswordInputRef"
+            >
+            <button 
+              @click="showAdminPassword = !showAdminPassword"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors p-1"
+              type="button"
+            >
+              <svg v-if="showAdminPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="flex gap-3">
+            <button
+              @click="cancelAdminAuth"
+              class="flex-1 px-4 py-2 bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-xl transition-colors"
+            >
+              取消
+            </button>
+            <button
+              @click="confirmAdminAuth"
+              class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 font-medium"
+            >
+              确认
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import draggable from 'vuedraggable'
 // ✅ 引入搜索引擎和友情链接
 import { fetchNavItems, searchEngines, friendLinks } from './data'
@@ -719,6 +777,46 @@ const showThemeModal = ref(false) // 控制主题弹窗
 const showEditModal = ref(false) // 控制编辑弹窗
 const showBookmarkImport = ref(false) // 控制书签导入弹窗
 const passwordInput = ref('') // 密码输入
+
+// === 管理员认证弹窗状态 ===
+const showAdminAuthModal = ref(false)
+const adminAuthPassword = ref('')
+const showAdminPassword = ref(false)
+const adminPasswordInputRef = ref(null)
+let adminAuthResolve = null
+
+// 请求管理员密码
+const requestAdminPassword = () => {
+  return new Promise((resolve) => {
+    adminAuthPassword.value = ''
+    showAdminPassword.value = false
+    showAdminAuthModal.value = true
+    adminAuthResolve = resolve
+    
+    // 自动聚焦
+    nextTick(() => {
+      adminPasswordInputRef.value?.focus()
+    })
+  })
+}
+
+// 确认管理员认证
+const confirmAdminAuth = () => {
+  if (adminAuthResolve) {
+    adminAuthResolve(adminAuthPassword.value)
+    adminAuthResolve = null
+  }
+  showAdminAuthModal.value = false
+}
+
+// 取消管理员认证
+const cancelAdminAuth = () => {
+  if (adminAuthResolve) {
+    adminAuthResolve(null) // 返回 null 表示取消
+    adminAuthResolve = null
+  }
+  showAdminAuthModal.value = false
+}
 
 // === 右键菜单状态 ===
 const contextMenuVisible = ref(false)
@@ -780,7 +878,7 @@ const handleFileUpload = async (event) => {
   if (!file) return
 
   // 验证管理员密码（因为上传接口需要鉴权）
-  const adminPassword = prompt('请输入管理员密码以授权上传：')
+  const adminPassword = await requestAdminPassword()
   if (!adminPassword) {
     // 清空文件选择，以便下次能重新选择同一个文件
     event.target.value = ''
@@ -853,12 +951,15 @@ const editCategory = async (oldName) => {
     return
   }
 
+  const adminPassword = await requestAdminPassword()
+  if (!adminPassword) return
+
   try {
     const response = await fetch('/api/categories/rename', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${prompt('请输入管理员密码：')}`
+        'Authorization': `Bearer ${adminPassword}`
       },
       body: JSON.stringify({ oldName, newName })
     })
@@ -885,12 +986,15 @@ const deleteCategory = async (categoryName) => {
     return
   }
 
+  const adminPassword = await requestAdminPassword()
+  if (!adminPassword) return
+
   try {
     const response = await fetch('/api/categories/delete', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${prompt('请输入管理员密码：')}`
+        'Authorization': `Bearer ${adminPassword}`
       },
       body: JSON.stringify({ name: categoryName })
     })
@@ -917,12 +1021,15 @@ const createNewCategory = async () => {
     return
   }
 
+  const adminPassword = await requestAdminPassword()
+  if (!adminPassword) return
+
   try {
     const response = await fetch('/api/categories/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${prompt('请输入管理员密码：')}`
+        'Authorization': `Bearer ${adminPassword}`
       },
       body: JSON.stringify({ name: name.trim() })
     })
@@ -1467,7 +1574,7 @@ const openEditModal = (item) => {
 
 // 保存编辑
 const saveEdit = async () => {
-  const adminPassword = prompt('请输入管理员密码：')
+  const adminPassword = await requestAdminPassword()
 
   if (!adminPassword) return
 
@@ -1502,7 +1609,7 @@ const deleteWebsite = async (item) => {
 
   if (!confirmed) return
 
-  const adminPassword = prompt('请输入管理员密码：')
+  const adminPassword = await requestAdminPassword()
 
   if (!adminPassword) return
 
@@ -1532,7 +1639,7 @@ const deleteWebsite = async (item) => {
 
 // 移动网站到其他分类
 const moveWebsiteToCategory = async (item, targetCategory) => {
-  const adminPassword = prompt('请输入管理员密码：')
+  const adminPassword = await requestAdminPassword()
 
   if (!adminPassword) return
 
