@@ -28,7 +28,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 保存设置
   document.getElementById('saveSettings').addEventListener('click', async () => {
     const defaultCategory = document.getElementById('defaultCategory').value
-    await chrome.storage.local.set({ defaultCategory })
+    const apiUrl = document.getElementById('apiUrlUser').value.trim()
+    
+    const updates = { defaultCategory }
+    if (apiUrl) {
+      updates.apiUrl = apiUrl
+    }
+    
+    await chrome.storage.local.set(updates)
     showMessage('设置已保存！', 'success')
   })
 
@@ -183,7 +190,7 @@ async function handleRegister() {
 
 // 检查登录状态
 async function checkLoginStatus() {
-  const { userToken, currentUser } = await chrome.storage.local.get(['userToken', 'currentUser'])
+  const { userToken, currentUser, apiUrl } = await chrome.storage.local.get(['userToken', 'currentUser', 'apiUrl'])
 
   if (userToken && currentUser) {
     // 已登录
@@ -199,6 +206,11 @@ async function checkLoginStatus() {
     const { defaultCategory } = await chrome.storage.local.get(['defaultCategory'])
     if (defaultCategory) {
       document.getElementById('defaultCategory').value = defaultCategory
+    }
+
+    // 加载 API 地址
+    if (apiUrl) {
+      document.getElementById('apiUrlUser').value = apiUrl
     }
   } else {
     // 未登录
