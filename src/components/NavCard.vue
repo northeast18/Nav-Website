@@ -4,12 +4,12 @@
     @contextmenu.prevent="handleContextMenu"
     class="group relative flex flex-col items-center justify-center py-1.5 sm:py-2 px-0 rounded-xl border transition-all duration-500 cursor-pointer h-full overflow-hidden"
     :class="[
-      isFavorite ? 'bg-gradient-to-br from-purple-900/40 to-pink-900/40 border-pink-500/50 shadow-lg shadow-pink-500/20' : 'bg-gray-900/60 border-white/10 hover:border-purple-400/50',
-      'hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/30'
+      isFavorite ? 'bg-gradient-to-br from-primary/40 to-secondary/40 border-primary/50 shadow-lg shadow-primary/20' : 'bg-white/40 dark:bg-gray-900/60 border-black/5 dark:border-white/10 hover:border-primary/50',
+      'hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/30'
     ]"
   >
     <!-- 动态背景光效 -->
-    <div class="absolute inset-0 bg-gradient-to-br from-purple-600/0 via-blue-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:via-blue-600/10 group-hover:to-pink-600/10 transition-all duration-700"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-primary/0 via-secondary/0 to-primary/0 group-hover:from-primary/10 group-hover:via-secondary/10 group-hover:to-primary/10 transition-all duration-700"></div>
 
     <!-- 收藏标记 -->
     <button
@@ -19,7 +19,7 @@
     >
       <svg
         class="w-3 h-3 transition-all duration-300"
-        :class="isFavorite ? 'fill-pink-400 text-pink-400 scale-110 drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]' : 'fill-none text-gray-400 hover:text-pink-300'"
+        :class="isFavorite ? 'fill-primary text-primary scale-110 drop-shadow-[0_0_8px_rgb(var(--primary-from)/0.8)]' : 'fill-none text-gray-400 hover:text-primary'"
         viewBox="0 0 24 24"
         stroke="currentColor"
         stroke-width="2"
@@ -31,7 +31,7 @@
     <!-- 图标容器 -->
     <div class="relative mb-1.5 sm:mb-2">
       <!-- 图标光晕效果 -->
-      <div class="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-90 group-hover:scale-100"></div>
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-90 group-hover:scale-100"></div>
 
       <div class="relative flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
         <!-- 显示图片 -->
@@ -45,7 +45,7 @@
         />
 
         <!-- 图片挂了显示这个 SVG 地球 -->
-        <div v-else class="h-full w-full flex items-center justify-center rounded-xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 text-gray-500 group-hover:text-purple-400 transition-all duration-300 border border-white/5 group-hover:border-purple-500/30">
+        <div v-else class="h-full w-full flex items-center justify-center rounded-xl bg-gray-100/50 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 group-hover:text-primary transition-all duration-300 border border-black/5 dark:border-white/5 group-hover:border-primary/30">
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>
           </svg>
@@ -55,15 +55,15 @@
 
     <!-- 文字部分 -->
     <div class="text-center w-full px-0 relative z-10">
-      <h3 class="text-[10px] sm:text-xs font-semibold text-gray-200 tracking-wide group-hover:text-white transition-colors truncate leading-tight mb-0.5" :class="{ 'text-pink-300 group-hover:text-pink-200': isFavorite }">
+      <h3 class="text-[10px] sm:text-xs font-semibold text-text-primary tracking-wide transition-colors truncate leading-tight mb-0.5" :class="{ 'text-primary': isFavorite }">
         {{ item.name }}
       </h3>
-      <p class="text-[8px] sm:text-[9px] text-gray-400 line-clamp-1 group-hover:text-gray-200 transition-colors leading-tight">
+      <p class="text-[8px] sm:text-[9px] text-text-secondary line-clamp-1 transition-colors leading-tight">
         {{ item.desc }}
       </p>
 
       <!-- 最后访问时间 -->
-      <div v-if="lastVisitTime" class="mt-1 flex items-center justify-center gap-0.5 text-[7px] text-gray-500 group-hover:text-purple-400/80 transition-colors">
+      <div v-if="lastVisitTime" class="mt-1 flex items-center justify-center gap-0.5 text-[7px] text-text-secondary/70 group-hover:text-primary/80 transition-colors">
         <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -72,7 +72,7 @@
     </div>
 
     <!-- 悬停时的边框光效 -->
-    <div class="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-purple-400/30 transition-all duration-500 pointer-events-none"></div>
+    <div class="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-primary/30 transition-all duration-500 pointer-events-none"></div>
 
     <!-- 弹窗部分 -->
     <div v-if="showModal" class="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl" @click.stop>
@@ -82,10 +82,10 @@
             :href="item.lanUrl"
             target="_blank"
             @click="handleLinkClick"
-            class="group/btn flex items-center justify-center p-2 rounded-xl bg-gray-700/40 hover:bg-purple-600/80 transition-all duration-300 border border-white/5 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/30"
+            class="group/btn flex items-center justify-center p-2 rounded-xl bg-gray-700/40 hover:bg-primary/80 transition-all duration-300 border border-white/5 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/30"
             title="内网地址"
           >
-            <svg class="w-5 h-5 text-purple-400 group-hover/btn:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-primary group-hover/btn:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
           </a>
@@ -94,10 +94,10 @@
             :href="item.url"
             target="_blank"
             @click="handleLinkClick"
-            class="group/btn flex items-center justify-center p-2 rounded-xl bg-gray-700/40 hover:bg-blue-600/80 transition-all duration-300 border border-white/5 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/30"
+            class="group/btn flex items-center justify-center p-2 rounded-xl bg-gray-700/40 hover:bg-secondary/80 transition-all duration-300 border border-white/5 hover:border-secondary/50 hover:shadow-lg hover:shadow-secondary/30"
             title="外网地址"
           >
-            <svg class="w-5 h-5 text-blue-400 group-hover/btn:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-secondary group-hover/btn:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
             </svg>
           </a>

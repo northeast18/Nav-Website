@@ -1,9 +1,11 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden flex flex-col">
+  <div class="min-h-screen relative overflow-hidden flex flex-col transition-colors duration-500">
     
-    <!-- ✅ 这里是你的星空背景图 (bg.jpg 必须在 public 文件夹内) -->
-    <!-- mix-blend-overlay 让图片和底下的紫色混合，效果更梦幻 -->
-    <div class="fixed inset-0 bg-[url('/bg.jpg')] bg-cover bg-center opacity-40 mix-blend-overlay pointer-events-none"></div>
+    <!-- ✅ 动态背景图 (由主题控制) -->
+    <div 
+      class="fixed inset-0 bg-cover bg-center pointer-events-none transition-all duration-700"
+      style="background-image: var(--bg-image); opacity: var(--bg-opacity); mix-blend-mode: overlay;"
+    ></div>
     
     <!-- 这一层是加深遮罩，防止背景太亮导致文字看不清 -->
     <div class="fixed inset-0 bg-black/10 pointer-events-none"></div>
@@ -18,7 +20,7 @@
             <!-- 云同步按钮（仅图标） -->
             <button
               @click="showSyncModal = true"
-              class="p-1.5 rounded-full transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center bg-gradient-to-r from-blue-600/80 to-cyan-600/80 border-blue-500/50 text-white hover:shadow-lg hover:shadow-blue-500/30 hover:scale-110"
+              class="p-1.5 rounded-full transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center bg-gradient-to-r from-primary to-primary-to/80 border-primary/50 text-white hover:shadow-lg hover:shadow-primary/30 hover:scale-110"
               title="云同步"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,7 +31,7 @@
             <!-- 主题设置按钮 -->
             <button
               @click="showThemeModal = true"
-              class="p-1.5 rounded-full transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center bg-gradient-to-r from-purple-600/80 to-pink-600/80 border-purple-500/50 text-white hover:shadow-lg hover:shadow-purple-500/30 hover:scale-110"
+              class="p-1.5 rounded-full transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center bg-gradient-to-r from-primary to-primary-to/80 border-primary/50 text-white hover:shadow-lg hover:shadow-primary/30 hover:scale-110"
               title="主题设置"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,7 +44,7 @@
               @click="toggleCategoryEditMode"
               class="p-1.5 rounded-full transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center"
               :class="isCategoryEditModeActive
-                ? 'bg-gradient-to-r from-orange-600/80 to-red-600/80 border-orange-500/50 text-white hover:shadow-lg hover:shadow-orange-500/30'
+                ? 'bg-gradient-to-r from-primary to-primary-to/80 border-primary/50 text-white hover:shadow-lg hover:shadow-primary/30'
                 : 'bg-white/10 border-white/20 text-gray-400 hover:bg-white/20 hover:text-white'"
               :title="isCategoryEditModeActive ? '完成编辑分类' : '编辑分类顺序'"
             >
@@ -54,7 +56,7 @@
             <!-- 导入书签按钮 -->
             <button
               @click="showBookmarkImport = true"
-              class="p-1.5 rounded-full transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center bg-gradient-to-r from-green-600/80 to-emerald-600/80 border-green-500/50 text-white hover:shadow-lg hover:shadow-green-500/30 hover:scale-110"
+              class="p-1.5 rounded-full transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center bg-gradient-to-r from-primary to-primary-to/80 border-primary/50 text-white hover:shadow-lg hover:shadow-primary/30 hover:scale-110"
               title="导入书签"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +78,7 @@
               @click="activeCategory = 'frequent'"
               class="px-2 sm:px-3 py-1 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all duration-300 border backdrop-blur-md"
               :class="activeCategory === 'frequent'
-                ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/30 scale-105'
+                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30 scale-105'
                 : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white hover:border-white/30'"
             >
               常用
@@ -87,7 +89,7 @@
               @click="activeCategory = 'favorites'"
               class="px-2 sm:px-3 py-1 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all duration-300 border backdrop-blur-md flex items-center gap-0.5"
               :class="activeCategory === 'favorites'
-                ? 'bg-gradient-to-r from-pink-600 to-purple-600 border-pink-500 text-white shadow-lg shadow-pink-500/30 scale-105'
+                ? 'bg-gradient-to-r from-primary-to to-primary border-primary-to text-white shadow-lg shadow-primary/30 scale-105'
                 : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white hover:border-white/30'"
             >
               <svg class="w-3 h-3" :class="activeCategory === 'favorites' ? 'fill-current' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -112,10 +114,10 @@
               :style="isCategoryEditModeActive ? 'cursor: grab; transition: all 0.2s;' : ''"
               :class="[
                 activeCategory === item.category
-                  ? (item.category === '私密' ? 'bg-gradient-to-r from-red-600 to-orange-600 border-red-500' : 'bg-purple-600 border-purple-500')
+                  ? (item.category === '私密' ? 'bg-gradient-to-r from-red-600 to-orange-600 border-red-500' : 'bg-primary border-primary')
                   : 'bg-white/5 border-white/10',
                 activeCategory === item.category
-                  ? 'text-white shadow-lg scale-105 ' + (item.category === '私密' ? 'shadow-red-500/30' : 'shadow-purple-500/30')
+                  ? 'text-white shadow-lg scale-105 ' + (item.category === '私密' ? 'shadow-red-500/30' : 'shadow-primary/30')
                   : 'text-gray-400 hover:bg-white/10 hover:text-white hover:border-white/30',
                 draggingCategoryIndex === index ? 'opacity-30 scale-95' : ''
               ]"
@@ -172,14 +174,14 @@
 
       <!-- 2. 搜索框 -->
       <div class="relative w-full max-w-2xl mx-auto mb-6 sm:mb-8 group z-50 px-2">
-        <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl sm:rounded-2xl opacity-30 blur transition duration-1000 group-hover:opacity-75 group-hover:duration-200"></div>
+        <div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary-to rounded-xl sm:rounded-2xl opacity-30 blur transition duration-1000 group-hover:opacity-75 group-hover:duration-200"></div>
         <div class="relative flex items-center bg-gray-900/80 backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 transition-colors focus-within:bg-gray-800/90 focus-within:border-white/20">
           <div class="relative">
             <button
               @click.stop="showEngineList = !showEngineList"
               class="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg sm:rounded-xl transition-all"
             >
-              <span class="font-bold text-purple-400 text-xs sm:text-sm">{{ currentEngine.name }}</span>
+              <span class="font-bold text-primary text-xs sm:text-sm">{{ currentEngine.name }}</span>
               <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
             <div v-if="showEngineList" class="absolute top-full left-0 mt-2 w-32 bg-gray-800 border border-white/10 rounded-xl shadow-xl overflow-hidden">
@@ -187,7 +189,7 @@
                 v-for="(engine, index) in searchEngines"
                 :key="index"
                 @click="switchEngine(engine)"
-                class="px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-purple-600 hover:text-white text-gray-400 text-xs sm:text-sm transition-colors"
+                class="px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-primary hover:text-white text-gray-400 text-xs sm:text-sm transition-colors"
                 :class="{'text-white bg-white/10': currentEngine.name === engine.name}"
               >
                 {{ engine.name }}
@@ -203,7 +205,7 @@
           />
           <button
             @click="handleSearch"
-            class="hidden sm:flex px-4 sm:px-6 py-1.5 sm:py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl transition-all font-medium items-center gap-2 shadow-lg shadow-purple-900/20 text-sm"
+            class="hidden sm:flex px-4 sm:px-6 py-1.5 sm:py-2 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all font-medium items-center gap-2 shadow-lg shadow-primary/20 text-sm"
           >
             搜索
           </button>
@@ -254,8 +256,8 @@
           @click="toggleDragMode"
           class="p-3 rounded-full transition-all duration-300 border backdrop-blur-md inline-flex items-center justify-center shadow-lg hover:shadow-xl"
           :class="isDragModeActive
-            ? 'bg-gradient-to-r from-green-600/90 to-emerald-600/90 border-green-500/50 text-white hover:scale-110'
-            : 'bg-gradient-to-r from-purple-600/90 to-pink-600/90 border-purple-500/50 text-white hover:scale-110'"
+            ? 'bg-gradient-to-r from-primary to-primary-to border-primary/50 text-white hover:scale-110 shadow-primary/30'
+            : 'bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/20 hover:scale-110'"
           :title="isDragModeActive ? '点击完成拖拽' : '点击开始拖拽'"
         >
           <svg v-if="!isDragModeActive" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,7 +276,7 @@
         <!-- 友情链接按钮 -->
         <button 
           @click="showFriendModal = true"
-          class="flex items-center gap-1 hover:text-purple-400 transition-colors cursor-pointer"
+          class="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
           友情链接
@@ -291,17 +293,17 @@
     <div v-if="showFriendModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showFriendModal = false">
       <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
 
-      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-5 w-full max-w-md transform transition-all">
+      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-5 w-full max-w-md transform transition-all">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-pink-600/10 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-              <span class="w-1 h-6 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full shadow-lg shadow-purple-500/50"></span>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <span class="w-1 h-6 bg-gradient-to-b from-primary to-primary-to rounded-full shadow-lg shadow-primary/50"></span>
               友情链接
             </h3>
-            <button @click="showFriendModal = false" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-xl">
+            <button @click="showFriendModal = false" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
@@ -316,14 +318,14 @@
               <a
                 :href="link.url"
                 target="_blank"
-                class="group relative flex flex-col items-center py-1 px-0.5 rounded-xl bg-gray-700/30 hover:bg-purple-600/20 border border-white/5 hover:border-purple-400/40 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-1 overflow-hidden"
+                class="group relative flex flex-col items-center py-1 px-0.5 rounded-xl bg-gray-50/50 dark:bg-gray-700/30 hover:bg-primary/10 dark:hover:bg-primary/20 border border-gray-200 dark:border-white/5 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-1 overflow-hidden"
               >
                 <!-- 悬停背景光效 -->
-                <div class="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all duration-500"></div>
+                <div class="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary-to/0 group-hover:from-primary/10 group-hover:to-primary-to/10 transition-all duration-500"></div>
 
                 <!-- 图标容器 -->
                 <div class="relative mb-1">
-                  <div class="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary-to/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <div class="relative flex h-10 w-10 items-center justify-center transition-transform duration-300 group-hover:scale-110">
                     <img
                       :src="link.icon || getIconSrc({ url: link.url })"
@@ -333,7 +335,7 @@
                   </div>
                 </div>
 
-                <span class="relative z-10 text-[10px] font-medium text-gray-300 group-hover:text-white transition-colors truncate w-full text-center">{{ link.name }}</span>
+                <span class="relative z-10 text-[10px] font-medium text-gray-600 dark:text-gray-300 group-hover:text-primary dark:group-hover:text-white transition-colors truncate w-full text-center">{{ link.name }}</span>
               </a>
             </div>
           </div>
@@ -354,24 +356,24 @@
     <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="cancelPassword">
       <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
 
-      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-8 w-full max-w-md transform transition-all">
+      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-8 w-full max-w-md transform transition-all">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-red-600/10 via-transparent to-orange-600/10 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-red-600/5 via-transparent to-orange-600/5 rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
           <div class="flex justify-between items-center mb-8">
-            <h3 class="text-2xl font-bold text-white flex items-center gap-3">
-              <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <svg class="w-8 h-8 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
               密码验证
             </h3>
-            <button @click="cancelPassword" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-xl">
+            <button @click="cancelPassword" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
 
-          <p class="text-gray-400 text-sm mb-6">请输入密码以访问私密分类</p>
+          <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">请输入密码以访问私密分类</p>
 
           <div class="space-y-4">
             <input
@@ -379,16 +381,16 @@
               @keypress.enter="verifyPassword"
               type="password"
               placeholder="请输入密码"
-              class="w-full px-4 py-3 bg-gray-700/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-400/50 focus:ring-2 focus:ring-red-400/20 transition-all"
+              class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-red-400/50 focus:ring-2 focus:ring-red-400/20 transition-all"
               autofocus
             />
 
-            <p v-if="passwordError" class="text-red-400 text-sm">密码错误，请重试</p>
+            <p v-if="passwordError" class="text-red-500 dark:text-red-400 text-sm">密码错误，请重试</p>
 
             <div class="flex gap-3">
               <button
                 @click="cancelPassword"
-                class="flex-1 px-4 py-3 bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-xl transition-colors"
+                class="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl transition-colors"
               >
                 取消
               </button>
@@ -408,19 +410,19 @@
     <div v-if="showSyncModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showSyncModal = false">
       <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
 
-      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-8 w-full max-w-md transform transition-all">
+      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-8 w-full max-w-md transform transition-all">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-cyan-600/10 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
           <div class="flex justify-between items-center mb-8">
-            <h3 class="text-2xl font-bold text-white flex items-center gap-3">
-              <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
               云同步
             </h3>
-            <button @click="showSyncModal = false" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-xl">
+            <button @click="showSyncModal = false" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
@@ -431,41 +433,41 @@
             <div class="flex gap-2 mb-6">
               <button
                 @click="authMode = 'login'; authError = ''"
-                :class="['flex-1 px-4 py-2 rounded-lg transition-all text-sm font-medium', authMode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-700/50 text-gray-400 hover:text-white']"
+                :class="['flex-1 px-4 py-2 rounded-lg transition-all text-sm font-medium', authMode === 'login' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white']"
               >
                 登录
               </button>
               <button
                 @click="authMode = 'register'; authError = ''"
-                :class="['flex-1 px-4 py-2 rounded-lg transition-all text-sm font-medium', authMode === 'register' ? 'bg-blue-600 text-white' : 'bg-gray-700/50 text-gray-400 hover:text-white']"
+                :class="['flex-1 px-4 py-2 rounded-lg transition-all text-sm font-medium', authMode === 'register' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white']"
               >
                 注册
               </button>
             </div>
 
             <!-- 错误提示 -->
-            <div v-if="authError" class="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+            <div v-if="authError" class="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500 dark:text-red-400 text-sm">
               {{ authError }}
             </div>
 
             <!-- 登录表单 -->
             <div v-if="authMode === 'login'" class="space-y-4">
               <div>
-                <label class="block text-gray-400 text-sm mb-2">用户名</label>
+                <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">用户名</label>
                 <input
                   v-model="loginUsername"
                   type="text"
-                  class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                   placeholder="请输入用户名"
                   @keyup.enter="handleLogin"
                 >
               </div>
               <div>
-                <label class="block text-gray-400 text-sm mb-2">密码</label>
+                <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">密码</label>
                 <input
                   v-model="loginPassword"
                   type="password"
-                  class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                   placeholder="请输入密码"
                   @keyup.enter="handleLogin"
                 >
@@ -473,7 +475,7 @@
               <button
                 @click="handleLogin"
                 :disabled="authLoading"
-                class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full px-4 py-3 bg-gradient-to-r from-primary to-primary-to hover:from-primary/90 hover:to-primary-to/90 text-white rounded-xl transition-all shadow-lg shadow-primary/30 hover:shadow-primary/50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ authLoading ? '登录中...' : '登录' }}
               </button>
@@ -482,21 +484,21 @@
             <!-- 注册表单 -->
             <div v-else class="space-y-4">
               <div>
-                <label class="block text-gray-400 text-sm mb-2">用户名（至少 3 个字符）</label>
+                <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">用户名（至少 3 个字符）</label>
                 <input
                   v-model="registerUsername"
                   type="text"
-                  class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                   placeholder="请输入用户名"
                   @keyup.enter="handleRegister"
                 >
               </div>
               <div>
-                <label class="block text-gray-400 text-sm mb-2">密码（至少 6 个字符）</label>
+                <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">密码（至少 6 个字符）</label>
                 <input
                   v-model="registerPassword"
                   type="password"
-                  class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                   placeholder="请输入密码"
                   @keyup.enter="handleRegister"
                 >
@@ -504,7 +506,7 @@
               <button
                 @click="handleRegister"
                 :disabled="authLoading"
-                class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full px-4 py-3 bg-gradient-to-r from-primary to-primary-to hover:from-primary/90 hover:to-primary-to/90 text-white rounded-xl transition-all shadow-lg shadow-primary/30 hover:shadow-primary/50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ authLoading ? '注册中...' : '注册' }}
               </button>
@@ -514,18 +516,18 @@
           <!-- 已登录状态：显示用户信息和同步功能 -->
           <div v-else class="space-y-4">
             <!-- 用户信息卡片 -->
-            <div class="mb-6 p-4 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl border border-blue-500/30">
+            <div class="mb-6 p-4 bg-gradient-to-r from-primary/10 to-primary-to/10 rounded-xl border border-primary/20">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xl font-bold">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-to flex items-center justify-center text-white text-xl font-bold">
                   {{ currentUser?.username?.charAt(0).toUpperCase() }}
                 </div>
                 <div class="flex-1">
-                  <p class="text-white font-medium">{{ currentUser?.username }}</p>
-                  <p class="text-gray-400 text-xs">已登录</p>
+                  <p class="text-gray-900 dark:text-white font-medium">{{ currentUser?.username }}</p>
+                  <p class="text-gray-500 dark:text-gray-400 text-xs">已登录</p>
                 </div>
                 <button
                   @click="handleLogout"
-                  class="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs transition-colors"
+                  class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 rounded-lg text-xs transition-colors"
                 >
                   退出
                 </button>
@@ -533,8 +535,8 @@
             </div>
 
             <!-- 同步说明 -->
-            <div class="mb-4 p-3 bg-blue-900/30 border border-blue-500/20 rounded-lg">
-              <p class="text-blue-300 text-sm text-center">
+            <div class="mb-4 p-3 bg-primary/5 border border-primary/10 rounded-lg">
+              <p class="text-primary text-sm text-center">
                 请选择数据同步方式：
               </p>
             </div>
@@ -544,7 +546,7 @@
               <button
                 @click="syncToCloud"
                 :disabled="isSyncing"
-                class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full px-4 py-3 bg-gradient-to-r from-primary to-primary-to hover:from-primary/90 hover:to-primary-to/90 text-white rounded-xl transition-all shadow-lg shadow-primary/30 hover:shadow-primary/50 font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -558,7 +560,7 @@
               <button
                 @click="syncFromCloud"
                 :disabled="isSyncing"
-                class="w-full px-4 py-3 bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3-3m0 0l3 3m-3-3v12" />
@@ -584,19 +586,19 @@
     <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showEditModal = false">
       <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
 
-      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-md transform transition-all">
+      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-md transform transition-all">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-pink-600/10 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
           <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-              <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
               编辑网站
             </h3>
-            <button @click="showEditModal = false" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-xl">
+            <button @click="showEditModal = false" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
@@ -604,56 +606,56 @@
           <div class="space-y-4">
             <!-- 名称 -->
             <div>
-              <label class="block text-gray-400 text-sm mb-2">名称</label>
+              <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">名称</label>
               <input
                 v-model="editForm.name"
                 type="text"
-                class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                 placeholder="请输入网站名称"
               >
             </div>
 
             <!-- URL -->
             <div>
-              <label class="block text-gray-400 text-sm mb-2">网址</label>
+              <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">网址</label>
               <input
                 v-model="editForm.url"
                 type="text"
-                class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                 placeholder="https://example.com"
               >
             </div>
 
             <!-- 内网地址 -->
             <div>
-              <label class="block text-gray-400 text-sm mb-2">内网地址（可选）</label>
+              <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">内网地址（可选）</label>
               <input
                 v-model="editForm.lanUrl"
                 type="text"
-                class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                 placeholder="http://192.168.1.1"
               >
             </div>
 
             <!-- 描述 -->
             <div>
-              <label class="block text-gray-400 text-sm mb-2">描述</label>
+              <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">描述</label>
               <input
                 v-model="editForm.desc"
                 type="text"
-                class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                 placeholder="简短描述"
               >
             </div>
 
             <!-- 图标URL -->
             <div>
-              <label class="block text-gray-400 text-sm mb-2">图标 URL（可选）</label>
+              <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">图标 URL（可选）</label>
               <div class="flex gap-2">
                 <input
                   v-model="editForm.iconUrl"
                   type="text"
-                  class="flex-1 px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                  class="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                   placeholder="https://example.com/icon.png"
                 >
                 <input
@@ -666,7 +668,7 @@
                 <button
                   @click="$refs.fileInput.click()"
                   :disabled="isUploading"
-                  class="px-4 py-2 bg-gray-700/50 hover:bg-gray-600 text-white rounded-xl transition-all border border-white/10 flex items-center justify-center min-w-[5rem]"
+                  class="px-4 py-2 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-xl transition-all border border-gray-200 dark:border-white/10 flex items-center justify-center min-w-[5rem]"
                   title="上传本地图片"
                 >
                   <span v-if="isUploading" class="text-xs">上传中...</span>
@@ -683,22 +685,22 @@
                 v-model="editForm.darkIcon"
                 type="checkbox"
                 id="darkIcon"
-                class="w-4 h-4 rounded border-white/10 bg-gray-900/50 text-purple-500 focus:ring-purple-500/50"
+                class="w-4 h-4 rounded border-gray-300 dark:border-white/10 bg-white dark:bg-gray-900/50 text-primary focus:ring-primary/50"
               >
-              <label for="darkIcon" class="text-gray-400 text-sm">图标是深色的，需要反色显示</label>
+              <label for="darkIcon" class="text-gray-500 dark:text-gray-400 text-sm">图标是深色的，需要反色显示</label>
             </div>
 
             <!-- 按钮 -->
             <div class="flex gap-3 pt-2">
               <button
                 @click="showEditModal = false"
-                class="flex-1 px-4 py-3 bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-xl transition-colors"
+                class="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl transition-colors"
               >
                 取消
               </button>
               <button
                 @click="saveEdit"
-                class="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 font-medium"
+                class="flex-1 px-4 py-3 bg-gradient-to-r from-primary to-primary-to hover:from-primary/90 hover:to-primary-to/90 text-white rounded-xl transition-all shadow-lg shadow-primary/30 hover:shadow-primary/50 font-medium"
               >
                 保存
               </button>
@@ -720,13 +722,13 @@
     <div v-if="showAdminAuthModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="cancelAdminAuth">
       <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
       
-      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-sm transform transition-all">
+      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-sm transform transition-all">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-blue-600/10 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
-          <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
             验证管理员身份
@@ -736,14 +738,14 @@
             <input
               v-model="adminAuthPassword"
               :type="showAdminPassword ? 'text' : 'password'"
-              class="w-full px-4 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all pr-12"
+              class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all pr-12"
               placeholder="请输入管理员密码"
               @keyup.enter="confirmAdminAuth"
               ref="adminPasswordInputRef"
             >
             <button 
               @click="showAdminPassword = !showAdminPassword"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors p-1"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-1"
               type="button"
             >
               <svg v-if="showAdminPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -759,13 +761,13 @@
           <div class="flex gap-3">
             <button
               @click="cancelAdminAuth"
-              class="flex-1 px-4 py-2 bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-xl transition-colors"
+              class="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl transition-colors"
             >
               取消
             </button>
             <button
               @click="confirmAdminAuth"
-              class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 font-medium"
+              class="flex-1 px-4 py-2 bg-gradient-to-r from-primary to-primary-to hover:from-primary/90 hover:to-primary-to/90 text-white rounded-xl transition-all shadow-lg shadow-primary/30 hover:shadow-primary/50 font-medium"
             >
               确认
             </button>
@@ -2260,11 +2262,12 @@ watch(filteredItems, () => {
 /* CSS 变量 */
 :root {
   /* 主色调 */
-  --primary-from: rgb(147, 51, 234);
-  --primary-to: rgb(59, 130, 246);
+  --primary-from: 59 130 246;
+  --primary-to: 14 165 233;
 
   /* 背景相关 */
-  --bg-image: url('/bg.jpg');
+  --bg-image: none;
+  --bg-image-opacity: 0;
   --bg-saturation: 100%;
   --bg-overlay: rgba(0, 0, 0, 0.1);
 

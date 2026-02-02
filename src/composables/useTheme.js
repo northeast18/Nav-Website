@@ -1,166 +1,237 @@
 import { ref, watch, onMounted } from 'vue'
 
-// 预设主题色
+// 预设主题色 (Updated to space-separated RGB for Tailwind opacity support)
 const PRESET_COLORS = {
-  default: { from: '147, 51, 234', to: '59, 130, 246', name: '紫蓝' },
-  ocean: { from: '6, 182, 212', to: '59, 130, 246', name: '青蓝' },
-  forest: { from: '34, 197, 94', to: '16, 185, 129', name: '森林' },
-  sunset: { from: '249, 115, 22', to: '239, 68, 68', name: '日落' },
-  pink: { from: '236, 72, 153', to: '168, 85, 247', name: '粉紫' }
+  tech: {
+    name: '科技蓝',
+    from: '59 130 246',
+    to: '14 165 233',
+    bg: {
+      dark: { from: '2 6 23', to: '15 23 42' },
+      light: { from: '239 246 255', to: '203 213 225' }
+    }
+  },
+  minimal: {
+    name: '极简白',
+    from: '148 163 184',
+    to: '226 232 240',
+    bg: {
+      dark: { from: '2 6 23', to: '15 23 42' },
+      light: { from: '241 245 249', to: '226 232 240' }
+    }
+  },
+  purple: {
+    name: '梦幻紫',
+    from: '147 51 234',
+    to: '236 72 153',
+    bg: {
+      dark: { from: '88 28 135', to: '15 23 42' },
+      light: { from: '245 243 255', to: '233 213 255' }
+    }
+  },
+  emerald: {
+    name: '清新绿',
+    from: '16 185 129',
+    to: '52 211 153',
+    bg: {
+      dark: { from: '6 78 59', to: '15 23 42' },
+      light: { from: '232 253 245', to: '219 252 240' }
+    }
+  },
+  orange: {
+    name: '活力橙',
+    from: '249 115 22',
+    to: '251 146 60',
+    bg: {
+      dark: { from: '67 20 7', to: '15 23 42' },
+      light: { from: '254 245 235', to: '252 240 230' }
+    }
+  },
+  dark: {
+    name: '暗夜',
+    from: '71 85 105',
+    to: '30 41 59',
+    bg: {
+      dark: { from: '2 6 23', to: '0 0 0' },
+      light: { from: '241 245 249', to: '203 213 225' }
+    }
+  }
+}
+
+const DEFAULT_SETTINGS = {
+  mode: 'dark',
+  primaryColor: 'minimal',
+  backgroundType: 'none',
+  bgImage: '',
+  saturation: 100,
+  glassEffect: 30,
+  blur: 10,
+  bgBrightness: 100
+}
+
+const settings = ref({ ...DEFAULT_SETTINGS })
+
+const adjustBrightness = (rgbColor, factor, isDark) => {
+  const [r, g, b] = rgbColor.split(' ').map(Number)
+  let adjustedFactor = factor
+
+  if (isDark) {
+    adjustedFactor = Math.min(1.5, factor)
+  } else {
+    adjustedFactor = Math.max(0.7, factor)
+  }
+
+  const newR = Math.min(255, Math.round(r * adjustedFactor))
+  const newG = Math.min(255, Math.round(g * adjustedFactor))
+  const newB = Math.min(255, Math.round(b * adjustedFactor))
+
+  return `${newR} ${newG} ${newB}`
+}
+
+// 应用主题到 DOM
+const applyTheme = () => {
+  const root = document.documentElement
+  const s = settings.value
+
+  // 1. 设置模式 (Dark/Light)
+  if (s.mode === 'auto') {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  } else {
+    if (s.mode === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }
+
+  // 2. 设置主题色 (CSS Variables)
+  let fromColor, toColor
+  let bgFrom, bgTo
+
+  const isDark = root.classList.contains('dark')
+
+  if (PRESET_COLORS[s.primaryColor]) {
+    const preset = PRESET_COLORS[s.primaryColor]
+    fromColor = preset.from
+    toColor = preset.to
+
+    const bg = isDark ? preset.bg.dark : preset.bg.light
+    const brightnessFactor = s.bgBrightness / 100
+
+    bgFrom = adjustBrightness(bg.from, brightnessFactor, isDark)
+    bgTo = adjustBrightness(bg.to, brightnessFactor, isDark)
+  } else if (s.primaryColor.startsWith('#')) {
+    const hexToRgb = (hex) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+      return result ? `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : '59 130 246'
+    }
+    fromColor = hexToRgb(s.primaryColor)
+    toColor = hexToRgb(s.primaryColor)
+
+    const preset = PRESET_COLORS.tech
+    const bg = isDark ? preset.bg.dark : preset.bg.light
+    const brightnessFactor = s.bgBrightness / 100
+
+    bgFrom = adjustBrightness(bg.from, brightnessFactor, isDark)
+    bgTo = adjustBrightness(bg.to, brightnessFactor, isDark)
+  } else {
+    const preset = PRESET_COLORS.tech
+    fromColor = preset.from
+    toColor = preset.to
+    const bg = isDark ? preset.bg.dark : preset.bg.light
+    const brightnessFactor = s.bgBrightness / 100
+
+    bgFrom = adjustBrightness(bg.from, brightnessFactor, isDark)
+    bgTo = adjustBrightness(bg.to, brightnessFactor, isDark)
+  }
+
+  root.style.setProperty('--primary-from', fromColor)
+  root.style.setProperty('--primary-to', toColor)
+  root.style.setProperty('--page-bg-from', bgFrom)
+  root.style.setProperty('--page-bg-to', bgTo)
+
+  // 3. 设置背景 (Handle in style.css or App.vue via var)
+  if (s.backgroundType === 'custom' && s.bgImage) {
+    root.style.setProperty('--bg-image', `url('${s.bgImage}')`)
+    root.style.setProperty('--bg-opacity', '1')
+  } else if (s.backgroundType === 'default') {
+    root.style.setProperty('--bg-image', `url('/bg.jpg')`)
+    root.style.setProperty('--bg-opacity', '0.4')
+  } else {
+    root.style.setProperty('--bg-image', 'none')
+    root.style.setProperty('--bg-opacity', '0')
+  }
+
+  root.style.setProperty('--bg-saturation', `${s.saturation}%`)
+
+  // 4. 设置玻璃效果
+  // Map 0-100 range to useful CSS values
+  const blurPx = Math.floor((s.glassEffect / 100) * 20) // 0px to 20px
+  const bgOpacity = 0.3 + (s.glassEffect / 100) * 0.6   // 0.3 to 0.9
+
+  root.style.setProperty('--glass-blur', `${blurPx}px`)
+  root.style.setProperty('--glass-bg-opacity', bgOpacity)
+}
+
+// 处理背景上传
+const handleBackgroundUpload = (file) => {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    settings.value.bgImage = e.target.result
+    settings.value.backgroundType = 'custom'
+  }
+  reader.readAsDataURL(file)
+}
+
+const resetBackground = () => {
+  settings.value.backgroundType = 'none'
+  settings.value.bgImage = ''
+}
+
+const setDefaultBackground = () => {
+  settings.value.backgroundType = 'default'
+  settings.value.bgImage = ''
 }
 
 export function useTheme() {
-  const settings = ref({
-    mode: 'auto', // 'auto' | 'light' | 'dark'
-    primaryColor: 'default',
-    backgroundType: 'default', // 'default' | 'custom'
-    customBackground: null,
-    glassEffect: 50, // 0-100
-    saturation: 100 // 0-200
-  })
-
-  // 从 localStorage 加载设置
   onMounted(() => {
+    // 从 localStorage 加载设置
     const saved = localStorage.getItem('themeSettings')
     if (saved) {
       try {
-        const data = JSON.parse(saved)
-        settings.value = { ...settings.value, ...data }
+        const parsed = JSON.parse(saved)
+        settings.value = { ...DEFAULT_SETTINGS, ...parsed }
       } catch (e) {
-        console.error('Failed to load theme settings:', e)
+        console.error('Failed to parse theme settings', e)
       }
     }
-    applyTheme(settings.value)
+    applyTheme()
   })
 
-  // 监听设置变化并应用
-  watch(settings, (newVal) => {
-    localStorage.setItem('themeSettings', JSON.stringify(newVal))
-    applyTheme(newVal)
+  // 监听设置变化并保存
+  watch(settings, (newSettings) => {
+    localStorage.setItem('themeSettings', JSON.stringify(newSettings))
+    applyTheme()
   }, { deep: true })
 
-  // 应用主题到 DOM
-  const applyTheme = (theme) => {
-    const root = document.documentElement
-
-    // 1. 设置主题模式
-    let isDark = true
-    if (theme.mode === 'auto') {
-      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    } else {
-      isDark = theme.mode === 'dark'
-    }
-    root.classList.toggle('light', !isDark)
-
-    // 2. 设置主题色
-    const colors = theme.primaryColor.startsWith('#')
-      ? hexToRgbObj(theme.primaryColor)
-      : PRESET_COLORS[theme.primaryColor] || PRESET_COLORS.default
-
-    root.style.setProperty('--primary-from', `rgb(${colors.from})`)
-    root.style.setProperty('--primary-to', `rgb(${colors.to})`)
-
-    // 3. 设置背景
-    if (theme.backgroundType === 'custom' && theme.customBackground) {
-      root.style.setProperty('--bg-image', `url(${theme.customBackground})`)
-    } else {
-      root.style.setProperty('--bg-image', "url('/bg.jpg')")
-    }
-    root.style.setProperty('--bg-saturation', theme.saturation)
-
-    // 4. 设置玻璃效果
-    updateGlassEffect(theme.glassEffect)
-  }
-
-  // 更新玻璃效果
-  const updateGlassEffect = (value) => {
-    const blur = (value / 100) * 20 // 0-20px
-    const opacity = 0.3 + (value / 100) * 0.5 // 0.3-0.8
-
-    document.documentElement.style.setProperty('--glass-blur', `${blur}px`)
-    document.documentElement.style.setProperty('--glass-bg-opacity', opacity)
-  }
-
-  // Hex 转 RGB 对象
-  const hexToRgbObj = (hex) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    if (!result) return PRESET_COLORS.default
-
-    const r = parseInt(result[1], 16)
-    const g = parseInt(result[2], 16)
-    const b = parseInt(result[3], 16)
-
-    return {
-      from: `${r}, ${g}, ${b}`,
-      to: `${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)}`
-    }
-  }
-
-  // 处理背景图上传
-  const handleBackgroundUpload = (file) => {
-    if (!file) return
-
-    // 验证文件类型
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp']
-    if (!validTypes.includes(file.type)) {
-      alert('请上传 JPG、PNG 或 WebP 格式的图片')
-      return
-    }
-
-    // 限制文件大小（5MB）
-    if (file.size > 5 * 1024 * 1024) {
-      alert('图片大小不能超过 5MB')
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const img = new Image()
-      img.onload = () => {
-        // 使用 canvas 压缩
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
-
-        // 限制最大尺寸
-        const maxWidth = 1920
-        const maxHeight = 1080
-        let width = img.width
-        let height = img.height
-
-        if (width > maxWidth) {
-          height = (maxWidth / width) * height
-          width = maxWidth
-        }
-        if (height > maxHeight) {
-          width = (maxHeight / height) * width
-          height = maxHeight
-        }
-
-        canvas.width = width
-        canvas.height = height
-        ctx.drawImage(img, 0, 0, width, height)
-
-        // 转为 base64（压缩质量 0.8）
-        const compressed = canvas.toDataURL('image/jpeg', 0.8)
-        settings.value.customBackground = compressed
-        settings.value.backgroundType = 'custom'
+  // 监听系统主题变化
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (settings.value.mode === 'auto') {
+        applyTheme()
       }
-      img.src = e.target.result
-    }
-    reader.readAsDataURL(file)
-  }
-
-  // 重置背景为默认
-  const resetBackground = () => {
-    settings.value.backgroundType = 'default'
-    settings.value.customBackground = null
+    })
   }
 
   return {
     settings,
-    applyTheme,
+    PRESET_COLORS,
     handleBackgroundUpload,
     resetBackground,
-    PRESET_COLORS
+    setDefaultBackground
   }
 }

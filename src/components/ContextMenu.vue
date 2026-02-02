@@ -15,7 +15,7 @@
         <!-- 有子菜单的项 -->
         <div
           v-if="item.submenu"
-          class="menu-item flex items-center justify-between px-3 py-2 text-gray-300 hover:bg-purple-600/80 hover:text-white cursor-pointer transition-colors text-sm"
+          class="menu-item flex items-center justify-between px-3 py-2 text-gray-300 hover:bg-primary/80 hover:text-white cursor-pointer transition-colors text-sm"
           @mouseenter="showSubmenu(item, index)"
           @mouseleave="hideSubmenu"
         >
@@ -37,7 +37,7 @@
             <div
               v-for="(subItem, subIndex) in item.submenu"
               :key="subIndex"
-              class="submenu-item px-3 py-2 text-gray-300 hover:bg-purple-600/80 hover:text-white cursor-pointer transition-colors text-sm whitespace-nowrap"
+              class="submenu-item px-3 py-2 text-gray-300 hover:bg-primary/80 hover:text-white cursor-pointer transition-colors text-sm whitespace-nowrap"
               @click="handleAction(subItem.action)"
             >
               {{ subItem.label }}
@@ -48,7 +48,7 @@
         <!-- 普通菜单项 -->
         <div
           v-else
-          class="menu-item flex items-center gap-2 px-3 py-2 text-gray-300 hover:bg-purple-600/80 hover:text-white cursor-pointer transition-colors text-sm"
+          class="menu-item flex items-center gap-2 px-3 py-2 text-gray-300 hover:bg-primary/80 hover:text-white cursor-pointer transition-colors text-sm"
           @click="handleAction(item.action)"
         >
           <component v-if="item.icon" :is="item.icon" class="w-4 h-4" />

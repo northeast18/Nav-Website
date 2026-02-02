@@ -9,12 +9,50 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* 新增：星空背景图设置 */
-  /* 注意：确保 bg.jpg 已经放在了 public 文件夹中 */
-  background-image: url('/bg.jpg');
-  background-size: cover;           /* 让图片铺满整个屏幕 */
-  background-position: center;      /* 图片居中显示 */
-  background-attachment: fixed;     /* 滚动页面时背景不动 */
-  background-repeat: no-repeat;     /* 不重复平铺 */
-  min-height: 100vh;                /* 确保高度至少充满屏幕 */
+  min-height: 100vh;
+  /* 默认背景：深色渐变 (Slate 950 -> Slate 900) - 更纯净的深色背景 */
+  background: linear-gradient(to bottom right, rgb(var(--page-bg-from)), rgb(var(--page-bg-to)));
+  color: var(--text-primary);
+}
+
+/* CSS 变量 */
+:root {
+  --primary-from: 59 130 246;
+  --primary-to: 14 165 233;
+  --page-bg-from: 2 6 23;
+  --page-bg-to: 15 23 42;
+  --bg-image: none;
+  --bg-image-opacity: 0;
+  --bg-saturation: 100%;
+  --bg-overlay: rgba(0, 0, 0, 0.1);
+  --glass-blur: 8px;
+  --glass-bg-opacity: 0.7;
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+}
+
+.light {
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --glass-bg-opacity: 0.85;
+  --bg-overlay: rgba(0, 0, 0, 0.08);
+  --glass-border: rgba(0, 0, 0, 0.08);
+}
+
+/* 拖拽样式 */
+.ghost-card {
+  opacity: 0.4;
+  background: rgba(var(--primary-from) / 0.1);
+  border: 2px dashed rgba(var(--primary-from) / 0.5);
+}
+
+.dragging-card {
+  transform: scale(1.05) rotate(2deg);
+  box-shadow: 0 20px 40px rgba(var(--primary-from) / 0.3);
+  z-index: 100;
+}
+
+.chosen-card {
+  cursor: grabbing !important;
 }

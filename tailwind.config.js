@@ -4,8 +4,19 @@ export default {
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
+      colors: {
+        primary: {
+          DEFAULT: 'rgb(var(--primary-from) / <alpha-value>)',
+          to: 'rgb(var(--primary-to) / <alpha-value>)',
+        },
+        text: {
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+        }
+      },
       backdropBlur: {
         'xs': '2px',
       },
