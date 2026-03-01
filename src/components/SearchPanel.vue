@@ -65,7 +65,7 @@
       搜索
     </button>
   </div>
-  <div v-if="showEngineList" @click="$emit('close-engine-list')" class="fixed inset-0 z-40 bg-transparent cursor-default"></div>
+  <div v-if="showEngineList" @click="$emit('close-engine-list')" class="fixed inset-0 z-30 bg-transparent cursor-default"></div>
 </template>
 
 <script setup>
