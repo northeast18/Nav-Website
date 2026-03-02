@@ -1,5 +1,5 @@
 <template>
-  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="closeModal">
+  <div v-if="show" class="fixed inset-0 flex items-center justify-center p-4" :class="zIndex" @click.self="closeModal">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
     
     <div class="glass-modal" :class="maxWidthClass">
@@ -42,6 +42,10 @@ const props = defineProps({
   maxWidth: {
     type: String,
     default: 'max-w-md' // e.g. max-w-sm, max-w-md, max-w-lg
+  },
+  zIndex: {
+    type: String,
+    default: 'z-50'
   }
 })
 

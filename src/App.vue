@@ -648,6 +648,7 @@
     <PasswordModal
       :show="showAdminAuthModal"
       v-model="adminAuthPassword"
+      z-index="z-[60]"
       @close="cancelAdminAuth"
       @confirm="confirmAdminAuth"
     />

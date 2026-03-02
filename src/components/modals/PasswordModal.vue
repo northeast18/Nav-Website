@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :show="show" title="验证管理员身份" @close="$emit('close')">
+  <BaseModal :show="show" title="验证管理员身份" @close="$emit('close')" :z-index="zIndex">
     <div class="mb-6 relative">
       <input
         :value="modelValue"
@@ -38,7 +38,11 @@ import BaseModal from './BaseModal.vue'
 
 defineProps({
   show: Boolean,
-  modelValue: String
+  modelValue: String,
+  zIndex: {
+    type: String,
+    default: 'z-50'
+  }
 })
 
 defineEmits(['close', 'confirm', 'update:modelValue'])
