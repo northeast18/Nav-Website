@@ -1,5 +1,228 @@
 // Background Service Worker
 
+// dashboardicons 图标映射表（仅用于精确匹配已知服务）
+const DASHBOARD_ICON_MAP = {
+  // 常用网站
+  'github': 'github',
+  'gitlab': 'gitlab',
+  'bitbucket': 'bitbucket',
+  'youtube': 'youtube',
+  'twitter': 'twitter',
+  'x.com': 'twitter',
+  'facebook': 'facebook',
+  'instagram': 'instagram',
+  'reddit': 'reddit',
+  'discord': 'discord',
+  'slack': 'slack',
+  'notion': 'notion',
+  'figma': 'figma',
+  'spotify': 'spotify',
+  'netflix': 'netflix',
+  'amazon': 'amazon',
+  'stackoverflow': 'stackoverflow',
+  'medium': 'medium',
+  'zhihu': 'zhihu',
+  'bilibili': 'bilibili',
+  'douyin': 'douyin',
+  'juejin': 'juejin',
+
+  // 云服务
+  'cloudflare': 'cloudflare',
+  'vercel': 'vercel',
+  'heroku': 'heroku',
+  'digitalocean': 'digitalocean',
+  'aws': 'aws',
+  'azure': 'azure',
+  'google': 'google',
+  'microsoft': 'microsoft',
+  'apple': 'apple',
+
+  // 开发工具
+  'docker': 'docker',
+  'kubernetes': 'kubernetes',
+  'vuejs': 'vue-js',
+  'reactjs': 'react',
+  'nextjs': 'nextjs',
+  'tailwindcss': 'tailwindcss',
+
+  // AI 工具
+  'deepseek': 'deepseek',
+  'openai': 'openai',
+  'anthropic': 'anthropic',
+  'claude': 'claude',
+  'chatgpt': 'chatgpt',
+  'siliconflow': 'siliconflow',
+  'perplexity': 'perplexity',
+  'cursor': 'cursor',
+
+  // 浏览器
+  'brave': 'brave',
+  'chrome': 'google-chrome',
+  'firefox': 'firefox',
+  'safari': 'safari',
+  'edge': 'microsoft-edge',
+
+  // 密码管理
+  '1password': '1password',
+  'bitwarden': 'bitwarden',
+
+  // 监控
+  'sentry': 'sentry',
+  'grafana': 'grafana',
+
+  // CI/CD
+  'jenkins': 'jenkins',
+  'circleci': 'circleci',
+
+  // 部署平台
+  'render': 'render',
+  'supabase': 'supabase',
+
+  // 数据库
+  'mongodb': 'mongodb',
+  'redis': 'redis',
+  'postgresql': 'postgresql',
+  'mysql': 'mysql',
+
+  // ORM
+  'prisma': 'prisma',
+
+  // 服务器
+  'nginx': 'nginx',
+  'apache': 'apache',
+
+  // 自托管
+  'portainer': 'portainer',
+  'uptime-kuma': 'uptime-kuma',
+  'dozzle': 'dozzle',
+  'gotify': 'gotify',
+  'searxng': 'searxng',
+  'adguard': 'adguard',
+  'stirling-pdf': 'stirling-pdf',
+
+  // 下载
+  'qbittorrent': 'qbittorrent',
+
+  // 媒体
+  'immich': 'immich',
+  'jellyfin': 'jellyfin',
+  'plex': 'plex',
+  'emby': 'emby',
+
+  // 文件管理
+  'filebrowser': 'filebrowser',
+  'it-tools': 'it-tools',
+  'alist': 'alist',
+
+  // 自动化
+  'n8n': 'n8n',
+  'homeassistant': 'home-assistant',
+
+  // 网络
+  'tailscale': 'tailscale',
+}
+
+/**
+ * 从 URL 中提取域名
+ */
+function extractHostname(url) {
+  try {
+    if (!url.startsWith('http')) url = 'https://' + url
+    const hostname = new URL(url).hostname
+    return hostname.replace(/^www\./, '')
+  } catch (e) {
+    return ''
+  }
+}
+
+/**
+ * 查找 dashboardicons 图标
+ */
+function findDashboardIcon(url) {
+  const hostname = extractHostname(url).toLowerCase()
+  if (!hostname) return null
+
+  // 1. 精确匹配完整域名
+  if (DASHBOARD_ICON_MAP[hostname]) {
+    return DASHBOARD_ICON_MAP[hostname]
+  }
+
+  // 2. 精确匹配主域名（如 huggingface.co -> huggingface）
+  const parts = hostname.split('.')
+  if (parts.length >= 2) {
+    const mainPart = parts[0]
+    if (DASHBOARD_ICON_MAP[mainPart]) {
+      return DASHBOARD_ICON_MAP[mainPart]
+    }
+  }
+
+  // 3. 部分匹配，但要排除一些特殊情况（比如 gemini.google.com 不能匹配成 google）
+  for (const [key, value] of Object.entries(DASHBOARD_ICON_MAP)) {
+    if (hostname.includes(key) || key.includes(hostname)) {
+      if (key === 'google' && hostname.includes('gemini')) {
+        return 'gemini'
+      }
+      return value
+    }
+  }
+
+  return null
+}
+
+/**
+ * 获取网站原生 favicon
+ * 优先使用 /favicon.ico
+ */
+function getNativeFavicon(url) {
+  const hostname = extractHostname(url)
+  if (!hostname) return null
+
+  // 优先使用网站的原生 favicon
+  return \`https://\${hostname}/favicon.ico\`
+}
+
+/**
+ * 获取网站图标 URL
+ */
+function getIconUrl(url, iconUrl = '') {
+  // 1. 优先用手动填的链接
+  if (iconUrl) return iconUrl
+
+  // 2. 尝试 dashboardicons 本地图标
+  const dashboardIconName = findDashboardIcon(url)
+  if (dashboardIconName) {
+    return \`https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/\${dashboardIconName}.svg\`
+  }
+
+  // 3. 使用网站原生 favicon
+  const nativeFavicon = getNativeFavicon(url)
+  if (nativeFavicon) {
+    return nativeFavicon
+  }
+
+  // 4. unavatar.io 作为备用
+  try {
+    const hostname = extractHostname(url)
+    if (hostname) {
+      return \`https://unavatar.io/\${hostname}\`
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // 5. DuckDuckGo 最后备用
+  try {
+    const hostname = extractHostname(url)
+    if (hostname) {
+      return \`https://icons.duckduckgo.com/ip3/\${hostname}.ico\`
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return ''
+}
+
 // 分类列表（与网站分类保持一致）
 const CATEGORIES = [
   { id: 'AI工具', name: 'AI工具' },
@@ -109,8 +332,8 @@ async function quickSave(url, title, tab) {
       return
     }
 
-    // 提取图标 - 使用 unavatar.io（替代 Google favicon，在无法访问 Google 的地方也能用）
-    const iconUrl = 'https://unavatar.io/' + new URL(url).hostname
+    // 提取图标 - 使用最新的复合策略获取图标
+    const iconUrl = getIconUrl(url)
 
     // 构造收藏数据
     const favorite = {
@@ -195,8 +418,8 @@ async function customSave(url, title, customIconUrl, tab) {
     // 使用自定义图标或自动获取
     let iconUrl = customIconUrl
     if (!iconUrl) {
-      // 自动获取图标 - 使用 unavatar.io
-      iconUrl = 'https://unavatar.io/' + new URL(url).hostname
+      // 自动获取图标 - 使用最新的复合策略
+      iconUrl = getIconUrl(url)
     }
 
     // 构造收藏数据
@@ -273,8 +496,8 @@ async function saveToCategory(url, title, category, tab) {
       return
     }
 
-    // 提取图标 - 使用 unavatar.io（替代 Google favicon，在无法访问 Google 的地方也能用）
-    const iconUrl = 'https://unavatar.io/' + new URL(url).hostname
+    // 提取图标 - 使用最新的复合策略获取图标
+    const iconUrl = getIconUrl(url)
 
     // 构造收藏数据
     const favorite = {

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree:*)",
+      "Bash(npm install:*)",
+      "Skill(superpowers:brainstorming)",
+      "Skill(superpowers:brainstorming:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npx add-skill:*)",
+      "Bash(wrangler d1 execute:*)",
+      "Bash(curl:*)",
+      "Bash(npm run build:*)"
+    ]
+  }
+}
