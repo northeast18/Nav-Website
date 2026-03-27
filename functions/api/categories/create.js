@@ -32,7 +32,7 @@ export async function onRequest(context) {
 
   // 检查频率限制 (防止暴力破解)
   const clientIp = getClientIp(request)
-  const isLocked = await checkRateLimit(env, clientIp, 'private')
+  const isLocked = await checkRateLimit(env, clientIp, 'admin')
   if (isLocked) {
     return jsonResponse({
       error: '密码尝试次数过多，请15分钟后再试',
@@ -41,15 +41,15 @@ export async function onRequest(context) {
   }
 
   const password = authHeader.replace('Bearer ', '')
-  const correctPassword = env.PRIVATE_PASSWORD
+  const correctPassword = env.ADMIN_PASSWORD
 
   if (!correctPassword || password !== correctPassword) {
-    await recordFailedAttempt(env, clientIp, 'private')
-    return jsonResponse({ error: '密码错误' }, 401)
+    await recordFailedAttempt(env, clientIp, 'admin')
+    return jsonResponse({ error: '管理员密码错误' }, 401)
   }
 
   // 密码验证成功，清除失败记录
-  await clearFailedAttempts(env, clientIp, 'private')
+  await clearFailedAttempts(env, clientIp, 'admin')
 
   try {
     const { name } = await request.json()
