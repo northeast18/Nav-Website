@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 检查登录状态
   await checkLoginStatus()
 
+  // 每次打开 popup 时，通知 background 更新分类信息
+  chrome.runtime.sendMessage({ action: 'refreshCategories' })
+
   // 快速收藏（自动图标）
   document.getElementById('savePage').addEventListener('click', async () => {
     try {

@@ -216,16 +216,31 @@ async function checkLoginStatus() {
     document.getElementById('userName').textContent = currentUser.username
     document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase()
 
-    // 加载默认分类设置
-    const { defaultCategory } = await chrome.storage.local.get(['defaultCategory'])
-    if (defaultCategory) {
-      document.getElementById('defaultCategory').value = defaultCategory
-    }
-
-    // 加载 API 地址
+    // 动态拉取分类并填充默认分类下拉列表
     if (apiUrl) {
       document.getElementById('apiUrlUser').value = apiUrl
+      await loadCategories(apiUrl)
     }
+
+    // 加载默认分类设置（必须在 loadCategories 后执行以便选中）
+    const { defaultCategory } = await chrome.storage.local.get(['defaultCategory'])
+    if (defaultCategory) {
+      // 检查当前 defaultCategory 是否存在于刚加载的列表中
+      const select = document.getElementById('defaultCategory')
+      const exists = Array.from(select.options).some(opt => opt.value === defaultCategory)
+      if (exists) {
+        select.value = defaultCategory
+      } else {
+        // 如果不存在，可能后端分类被删了，或者它是内置默认的（如“私密”）
+        // 若要保留旧版可以主动追加
+        const opt = document.createElement('option')
+        opt.value = defaultCategory
+        opt.textContent = defaultCategory
+        select.appendChild(opt)
+        select.value = defaultCategory
+      }
+    }
+
   } else {
     // 未登录
     document.getElementById('loginSection').classList.remove('hidden')
@@ -252,5 +267,28 @@ function showMessage(message, type = 'info') {
     setTimeout(() => {
       errorEl.classList.add('hidden')
     }, 3000)
+  }
+}
+
+// 动态拉取服务器上的最新分类
+async function loadCategories(apiUrl) {
+  try {
+    const response = await fetch(`${apiUrl}/api/websites/read`)
+    if (response.ok) {
+      const data = await response.json()
+      if (data.navItems) {
+        const select = document.getElementById('defaultCategory')
+        select.innerHTML = '' // 清空旧列表
+        
+        data.navItems.forEach(group => {
+          const opt = document.createElement('option')
+          opt.value = group.category
+          opt.textContent = group.category === '友情链接' ? '友情链接 ⭐' : group.category
+          select.appendChild(opt)
+        })
+      }
+    }
+  } catch (error) {
+    console.error('拉取分类失败:', error)
   }
 }

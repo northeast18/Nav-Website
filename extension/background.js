@@ -209,55 +209,86 @@ function getIconUrl(url, iconUrl = '') {
   }
 }
 
-// 分类列表（与网站分类保持一致）
-const CATEGORIES = [
-  { id: 'AI工具', name: 'AI工具' },
-  { id: '云服务和服务器', name: '云服务和服务器' },
-  { id: '互联网工具', name: '互联网工具' },
-  { id: '娱乐', name: '娱乐' },
-  { id: '常用网站', name: '常用网站' },
-  { id: '邮箱和域名', name: '邮箱和域名' },
-  { id: '我的服务', name: '我的服务' },
-  { id: '私密', name: '私密' },
-  { id: '友情链接', name: '友情链接 ⭐' }
-]
+// 获取动态分类列表并更新右键菜单
+async function updateContextMenus() {
+  const { apiUrl } = await chrome.storage.local.get(['apiUrl'])
+  let categories = [
+    { id: 'AI工具', name: 'AI工具' },
+    { id: '云服务和服务器', name: '云服务和服务器' },
+    { id: '互联网工具', name: '互联网工具' },
+    { id: '娱乐', name: '娱乐' },
+    { id: '常用网站', name: '常用网站' },
+    { id: '邮箱和域名', name: '邮箱和域名' },
+    { id: '我的服务', name: '我的服务' },
+    { id: '私密', name: '私密' },
+    { id: '友情链接', name: '友情链接 ⭐' }
+  ]
 
-// 扩展安装时初始化
-chrome.runtime.onInstalled.addListener(() => {
-  // 创建主菜单
-  chrome.contextMenus.create({
-    id: 'saveToNav',
-    title: '📌 收藏到导航网站',
-    contexts: ['page', 'link']
-  })
+  if (apiUrl) {
+    try {
+      const response = await fetch(`${apiUrl}/api/websites/read`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.navItems && data.navItems.length > 0) {
+          categories = data.navItems.map(group => ({
+            id: group.category,
+            name: group.category === '友情链接' ? '友情链接 ⭐' : group.category
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('获取分类失败:', error)
+    }
+  }
 
-  // 快速收藏
-  chrome.contextMenus.create({
-    id: 'quickSave',
-    parentId: 'saveToNav',
-    title: '⚡ 快速收藏（默认分类）',
-    contexts: ['page', 'link']
-  })
-
-  // 分隔符
-  chrome.contextMenus.create({
-    id: 'separator',
-    parentId: 'saveToNav',
-    type: 'separator',
-    contexts: ['page', 'link']
-  })
-
-  // 为每个分类创建子菜单
-  CATEGORIES.forEach(category => {
+  // 重新创建菜单
+  chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
-      id: 'category-' + category.id,
-      parentId: 'saveToNav',
-      title: category.name,
+      id: 'saveToNav',
+      title: '📌 收藏到导航网站',
       contexts: ['page', 'link']
     })
-  })
 
+    chrome.contextMenus.create({
+      id: 'quickSave',
+      parentId: 'saveToNav',
+      title: '⚡ 快速收藏（默认分类）',
+      contexts: ['page', 'link']
+    })
+
+    chrome.contextMenus.create({
+      id: 'separator',
+      parentId: 'saveToNav',
+      type: 'separator',
+      contexts: ['page', 'link']
+    })
+
+    categories.forEach(category => {
+      chrome.contextMenus.create({
+        id: 'category-' + category.id,
+        parentId: 'saveToNav',
+        title: category.name,
+        contexts: ['page', 'link']
+      })
+    })
+  })
+}
+
+// 扩展安装和启动时初始化
+chrome.runtime.onInstalled.addListener(() => {
+  updateContextMenus()
   console.log('导航网站收藏助手已安装')
+})
+
+chrome.runtime.onStartup.addListener(() => {
+  updateContextMenus()
+})
+
+// 当 API URL 变动时更新菜单
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'local' && changes.apiUrl) {
+    updateContextMenus()
+  }
 })
 
 // 监听右键菜单点击
@@ -288,6 +319,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   if (request.action === 'customSave') {
     customSave(request.url, request.title, request.iconUrl, sender.tab)
+    return true
+  }
+  if (request.action === 'refreshCategories') {
+    updateContextMenus().then(() => sendResponse({ success: true }))
     return true
   }
   return false
