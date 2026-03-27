@@ -219,8 +219,8 @@ export function getIconUrl(url, iconUrl = '') {
     // 3a. 内网地址直接使用原生 favicon
     return `https://${hostname}/favicon.ico`
   } else {
-    // 3b. 公网地址优先使用国内稳定的 api.iowen.cn 代理服务获取图标，避免跨域或被墙问题
-    return `https://api.iowen.cn/favicon/${hostname}.png`
+    // 3b. 公网地址优先使用 favicon.im 获取图标
+    return `https://favicon.im/${hostname}`
   }
 }
 
@@ -256,8 +256,8 @@ export function getFallbackIconUrls(url) {
     if (isLocal) {
       urls.push(`https://${hostname}/favicon.ico`)
     } else {
-      urls.push(`https://api.iowen.cn/favicon/${hostname}.png`)
       urls.push(`https://favicon.im/${hostname}`)
+      urls.push(`https://icon.horse/icon/${hostname}`)
       urls.push(`https://${hostname}/favicon.ico`)
       urls.push(`https://www.google.com/s2/favicons?domain=${hostname}&sz=128`)
     }
