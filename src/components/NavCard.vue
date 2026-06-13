@@ -34,9 +34,22 @@
       <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-90 group-hover:scale-100"></div>
 
       <div class="relative flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+        <!-- 文字图标 -->
+        <div
+          v-if="isTextIconMode"
+          class="h-full w-full flex items-center justify-center font-bold select-none text-sm sm:text-base border border-white/5 shadow-md overflow-hidden"
+          :style="{
+            color: textIconConfig.color,
+            backgroundColor: textIconConfig.bgColor,
+            borderRadius: textIconConfig.radius + 'px'
+          }"
+        >
+          {{ textIconConfig.text }}
+        </div>
+
         <!-- 显示图片 -->
         <img
-          v-if="!imageLoadError"
+          v-else-if="!imageLoadError"
           :src="iconSrc"
           @error="handleImageError"
           class="h-full w-full object-contain rounded-xl drop-shadow-lg transition-all duration-300"
@@ -109,7 +122,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { getIconUrl } from '../utils/icon'
+import { getIconUrl, isTextIcon, parseTextIcon } from '../utils/icon'
 
 const props = defineProps({
   item: Object,
@@ -163,6 +176,14 @@ const handleContextMenu = (event) => {
 const iconSrc = computed(() => {
   // 使用新的图标加载逻辑（支持 dashboardicons + 多源回退）
   return getIconUrl(props.item.url, props.item.iconUrl)
+})
+
+const isTextIconMode = computed(() => {
+  return isTextIcon(props.item.iconUrl)
+})
+
+const textIconConfig = computed(() => {
+  return parseTextIcon(props.item.iconUrl)
 })
 
 const lastVisitTime = computed(() => {

@@ -575,46 +575,152 @@
               >
             </div>
 
-            <!-- 图标URL -->
-            <div>
-              <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">图标 URL（可选）</label>
-              <div class="flex gap-2">
-                <input
-                  v-model="editForm.iconUrl"
-                  type="text"
-                  class="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-                  placeholder="https://example.com/icon.png"
+            <!-- 图标配置 -->
+            <div class="border-t border-black/5 dark:border-white/5 pt-4 space-y-4">
+              <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium">图标配置</label>
+              
+              <!-- Tab 切换 -->
+              <div class="flex bg-gray-100 dark:bg-gray-900/50 p-1 rounded-xl">
+                <button 
+                  type="button" 
+                  @click="editIconType = 'image'"
+                  class="flex-1 py-1.5 text-xs font-medium rounded-lg transition-all"
+                  :class="editIconType === 'image' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
                 >
-                <input
-                  type="file"
-                  ref="fileInput"
-                  class="hidden"
-                  accept="image/*"
-                  @change="handleFileUpload"
+                  图片链接
+                </button>
+                <button 
+                  type="button" 
+                  @click="editIconType = 'text'"
+                  class="flex-1 py-1.5 text-xs font-medium rounded-lg transition-all"
+                  :class="editIconType === 'text' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
                 >
-                <button
-                  @click="$refs.fileInput.click()"
-                  :disabled="isUploading"
-                  class="px-4 py-2 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-xl transition-all border border-gray-200 dark:border-white/10 flex items-center justify-center min-w-[5rem]"
-                  title="上传本地图片"
-                >
-                  <span v-if="isUploading" class="text-xs">上传中...</span>
-                  <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
+                  文字图标
                 </button>
               </div>
-            </div>
 
-            <!-- 暗黑图标 -->
-            <div class="flex items-center gap-2">
-              <input
-                v-model="editForm.darkIcon"
-                type="checkbox"
-                id="darkIcon"
-                class="w-4 h-4 rounded border-gray-300 dark:border-white/10 bg-white dark:bg-gray-900/50 text-primary focus:ring-primary/50"
-              >
-              <label for="darkIcon" class="text-gray-500 dark:text-gray-400 text-sm">图标是深色的，需要反色显示</label>
+              <!-- 图片链接配置区 -->
+              <div v-show="editIconType === 'image'" class="space-y-4">
+                <div class="flex gap-2">
+                  <input
+                    v-model="editForm.iconUrl"
+                    type="text"
+                    class="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all text-sm"
+                    placeholder="https://example.com/icon.png"
+                  >
+                  <input
+                    type="file"
+                    ref="fileInput"
+                    class="hidden"
+                    accept="image/*"
+                    @change="handleFileUpload"
+                  >
+                  <button
+                    @click="$refs.fileInput.click()"
+                    :disabled="isUploading"
+                    class="px-4 py-2 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-xl transition-all border border-gray-200 dark:border-white/10 flex items-center justify-center min-w-[5rem]"
+                    title="上传本地图片"
+                  >
+                    <span v-if="isUploading" class="text-xs">上传中...</span>
+                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input
+                    v-model="editForm.darkIcon"
+                    type="checkbox"
+                    id="darkIcon"
+                    class="w-4 h-4 rounded border-gray-300 dark:border-white/10 bg-white dark:bg-gray-900/50 text-primary focus:ring-primary/50"
+                  >
+                  <label for="darkIcon" class="text-gray-500 dark:text-gray-400 text-xs cursor-pointer">图标是深色的，需要反色显示</label>
+                </div>
+              </div>
+
+              <!-- 文字图标配置区 -->
+              <div v-show="editIconType === 'text'" class="flex gap-4">
+                <!-- 实时预览区 -->
+                <div class="flex flex-col items-center justify-center border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/30 rounded-xl p-3 w-24 h-24 flex-shrink-0">
+                  <span class="text-[10px] text-gray-400 dark:text-gray-500 mb-1">预览</span>
+                  <div 
+                    class="w-12 h-12 flex items-center justify-center font-bold text-base shadow-md border border-white/5 select-none overflow-hidden"
+                    :style="{
+                      color: editTextIconForm.color,
+                      backgroundColor: editTextIconForm.bgColor,
+                      borderRadius: editTextIconForm.radius + 'px'
+                    }"
+                  >
+                    {{ editTextIconForm.text || '文字' }}
+                  </div>
+                </div>
+
+                <!-- 参数编辑区 -->
+                <div class="flex-1 space-y-3">
+                  <!-- 图标文字 -->
+                  <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">图标文字 (最多4个字)</label>
+                    <input 
+                      v-model="editTextIconForm.text" 
+                      type="text" 
+                      maxlength="4" 
+                      class="w-full px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50"
+                      placeholder="例如：GG"
+                    >
+                  </div>
+
+                  <!-- 颜色设置 -->
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">文字颜色</label>
+                      <div class="flex items-center gap-1.5">
+                        <input v-model="editTextIconForm.color" type="color" class="w-8 h-8 rounded border-0 cursor-pointer p-0 bg-transparent flex-shrink-0">
+                        <input v-model="editTextIconForm.color" type="text" class="w-full px-2 py-1 text-xs bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white" placeholder="#FFFFFF">
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">背景颜色</label>
+                      <div class="flex items-center gap-1.5">
+                        <input v-model="editTextIconForm.bgColor" type="color" class="w-8 h-8 rounded border-0 cursor-pointer p-0 bg-transparent flex-shrink-0">
+                        <input v-model="editTextIconForm.bgColor" type="text" class="w-full px-2 py-1 text-xs bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white" placeholder="#3B82F6">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 预设色彩推荐 -->
+                  <div>
+                    <label class="block text-[10px] text-gray-400 mb-1">推荐色彩组合</label>
+                    <div class="flex flex-wrap gap-1.5">
+                      <button 
+                        v-for="preset in editColorPresets" 
+                        :key="preset.bg"
+                        type="button"
+                        @click="applyEditPreset(preset)"
+                        class="w-5 h-5 rounded-md border border-white/10 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+                        :style="{ backgroundColor: preset.bg }"
+                        :title="preset.name"
+                      >
+                        <span class="text-[8px] font-bold" :style="{ color: preset.text }">Aa</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- 圆角滑块 -->
+                  <div>
+                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      <span>圆角大小</span>
+                      <span>{{ editTextIconForm.radius }}px</span>
+                    </div>
+                    <input 
+                      v-model.number="editTextIconForm.radius" 
+                      type="range" 
+                      min="0" 
+                      max="24" 
+                      class="w-full accent-primary bg-gray-200 dark:bg-gray-700 h-1 rounded-lg cursor-pointer"
+                    >
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- 按钮 -->
@@ -666,7 +772,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick, reactive } from 'vue'
 import draggable from 'vuedraggable'
 // ✅ 引入搜索引擎和友情链接
 import { fetchNavItems, fetchFriendLinks, searchEngines } from './data'
@@ -679,6 +785,7 @@ import TopBar from './components/TopBar.vue'
 import SearchPanel from './components/SearchPanel.vue'
 import PasswordModal from './components/modals/PasswordModal.vue'
 import AddWebsiteModal from './components/modals/AddWebsiteModal.vue'
+import { isTextIcon, parseTextIcon, buildTextIconString } from './utils/icon'
 
 // 初始化主题系统
 const { settings: themeSettings } = useTheme()
@@ -815,6 +922,39 @@ const editForm = ref({
   darkIcon: false,
   category: ''
 })
+const editIconType = ref('image') // 'image' | 'text'
+const editTextIconForm = reactive({
+  text: '',
+  color: '#ffffff',
+  bgColor: '#3b82f6',
+  radius: 8
+})
+
+const editColorPresets = [
+  { name: '蓝色', bg: '#3b82f6', text: '#ffffff' },
+  { name: '绿色', bg: '#10b981', text: '#ffffff' },
+  { name: '紫色', bg: '#8b5cf6', text: '#ffffff' },
+  { name: '玫瑰', bg: '#f43f5e', text: '#ffffff' },
+  { name: '琥珀', bg: '#f59e0b', text: '#ffffff' },
+  { name: '靛青', bg: '#6366f1', text: '#ffffff' },
+  { name: '青色', bg: '#14b8a6', text: '#ffffff' },
+  { name: '深灰', bg: '#374151', text: '#ffffff' },
+  { name: '薄荷', bg: '#a7f3d0', text: '#065f46' },
+  { name: '樱花', bg: '#fbcfe8', text: '#9d174d' }
+]
+
+const applyEditPreset = (preset) => {
+  editTextIconForm.color = preset.text
+  editTextIconForm.bgColor = preset.bg
+}
+
+// 自动推荐图标文字
+watch(() => editForm.value?.name, (newName) => {
+  if (newName && !editTextIconForm.text && showEditModal.value) {
+    editTextIconForm.text = newName.slice(0, 2).toUpperCase()
+  }
+})
+
 const passwordError = ref(false) // 密码错误提示
 const isPrivateUnlocked = ref(false) // 私密分类是否已解锁
 const currentEngine = ref(searchEngines[0])
@@ -1691,6 +1831,23 @@ const openEditModal = (item) => {
       ? navItems.value.find(cat => cat.items.some(i => i.id === item.id))?.category || ''
       : activeCategory.value
   }
+
+  // 解析文字图标
+  if (isTextIcon(item.iconUrl)) {
+    editIconType.value = 'text'
+    const config = parseTextIcon(item.iconUrl)
+    editTextIconForm.text = config.text
+    editTextIconForm.color = config.color
+    editTextIconForm.bgColor = config.bgColor
+    editTextIconForm.radius = config.radius !== undefined ? config.radius : 8
+  } else {
+    editIconType.value = 'image'
+    editTextIconForm.text = item.name.slice(0, 2).toUpperCase()
+    editTextIconForm.color = '#ffffff'
+    editTextIconForm.bgColor = '#3b82f6'
+    editTextIconForm.radius = 8
+  }
+
   showEditModal.value = true
 }
 
@@ -1700,6 +1857,25 @@ const saveEdit = async () => {
 
   if (!adminPassword) return
 
+  // 针对文字图标拼装字符串
+  const submitData = { ...editForm.value }
+  if (editIconType.value === 'text') {
+    submitData.iconUrl = buildTextIconString({
+      text: editTextIconForm.text.trim() || editForm.value.name.slice(0, 2).toUpperCase(),
+      color: editTextIconForm.color,
+      bgColor: editTextIconForm.bgColor,
+      radius: editTextIconForm.radius
+    })
+  } else {
+    // 如果之前是文字图标，现在改回图片图标，直接使用 input 框内的 URL
+    // 因为文字图标存在 editForm.iconUrl 中时是以 text-icon: 前缀存储的，
+    // 用户如果是从文字图标切到图片图标，且修改了 URL，editForm.iconUrl 会保留更新。
+    // 但如果用户没有修改（或者我们把前缀清空），需要确保发过去的是普通的 URL。
+    if (isTextIcon(submitData.iconUrl)) {
+      submitData.iconUrl = ''
+    }
+  }
+
   try {
     const response = await fetch('/api/websites/update', {
       method: 'PUT',
@@ -1707,7 +1883,7 @@ const saveEdit = async () => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${adminPassword}`
       },
-      body: JSON.stringify(editForm.value)
+      body: JSON.stringify(submitData)
     })
 
     const result = await response.json()

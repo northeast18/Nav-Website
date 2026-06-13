@@ -11,7 +11,7 @@
       <span class="text-sm">{{ error }}</span>
     </div>
 
-    <form @submit.prevent="$emit('submit', form)" class="space-y-4">
+    <form @submit.prevent="handleSubmit" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">网站名称 *</label>
         <input v-model="form.name" type="text" required class="glass-input" placeholder="例如：GitHub">
@@ -83,24 +83,148 @@
         <input v-model="form.desc" type="text" class="glass-input" placeholder="简单的一句话介绍（可选）">
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            图标链接
-            <span v-if="form.iconUrl" class="text-green-500 text-xs ml-1">已自动获取</span>
-          </label>
-          <input v-model="form.iconUrl" type="url" class="glass-input" placeholder="留空自动获取">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">内网链接</label>
-          <input v-model="form.lanUrl" type="url" class="glass-input" placeholder="（可选）">
-        </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">内网链接</label>
+        <input v-model="form.lanUrl" type="url" class="glass-input" placeholder="（可选）">
       </div>
 
-      <div class="flex items-center gap-2 pt-1">
-        <input v-model="form.darkIcon" type="checkbox" id="addDarkIcon" class="w-4 h-4 rounded border-gray-300 dark:border-white/10 bg-white dark:bg-gray-900/50 text-green-500 focus:ring-green-500/50">
-        <label for="addDarkIcon" class="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">这是一个深色图标（需要反色显示）</label>
+      <!-- 图标设置选项 -->
+      <div class="border-t border-black/5 dark:border-white/5 pt-4 space-y-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">图标配置</label>
+        
+        <!-- Tab 切换 -->
+        <div class="flex bg-gray-100 dark:bg-gray-900/50 p-1 rounded-xl">
+          <button 
+            type="button" 
+            @click="iconType = 'image'"
+            class="flex-1 py-1.5 text-xs font-medium rounded-lg transition-all"
+            :class="iconType === 'image' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+          >
+            图片链接
+          </button>
+          <button 
+            type="button" 
+            @click="iconType = 'text'"
+            class="flex-1 py-1.5 text-xs font-medium rounded-lg transition-all"
+            :class="iconType === 'text' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+          >
+            文字图标
+          </button>
+        </div>
+
+        <!-- 图片链接配置区 -->
+        <div v-show="iconType === 'image'" class="space-y-4">
+          <div>
+            <div class="relative">
+              <input v-model="form.iconUrl" type="url" class="glass-input" placeholder="输入图片 URL 或留空自动获取">
+              <button 
+                v-if="form.url && !form.iconUrl" 
+                type="button" 
+                @click="autoFetchIcon"
+                class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-green-500 transition-colors"
+                title="自动获取图标"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </button>
+              <span v-if="iconFetching" class="absolute right-2 top-1/2 -translate-y-1/2">
+                <svg class="w-5 h-5 animate-spin text-green-500" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <input v-model="form.darkIcon" type="checkbox" id="addDarkIcon" class="w-4 h-4 rounded border-gray-300 dark:border-white/10 bg-white dark:bg-gray-900/50 text-green-500 focus:ring-green-500/50">
+            <label for="addDarkIcon" class="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">这是一个深色图标（需要反色显示）</label>
+          </div>
+        </div>
+
+        <!-- 文字图标配置区 -->
+        <div v-show="iconType === 'text'" class="flex gap-4">
+          <!-- 实时预览区 -->
+          <div class="flex flex-col items-center justify-center border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/30 rounded-xl p-3 w-24 h-24 flex-shrink-0">
+            <span class="text-[10px] text-gray-400 dark:text-gray-500 mb-1">预览</span>
+            <div 
+              class="w-12 h-12 flex items-center justify-center font-bold text-base shadow-md border border-white/5 select-none overflow-hidden"
+              :style="{
+                color: textIconForm.color,
+                backgroundColor: textIconForm.bgColor,
+                borderRadius: textIconForm.radius + 'px'
+              }"
+            >
+              {{ textIconForm.text || '文字' }}
+            </div>
+          </div>
+
+          <!-- 参数编辑区 -->
+          <div class="flex-1 space-y-3">
+            <!-- 图标文字 -->
+            <div>
+              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">图标文字 (最多4个字)</label>
+              <input 
+                v-model="textIconForm.text" 
+                type="text" 
+                maxlength="4" 
+                class="w-full px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50"
+                placeholder="例如：GG"
+              >
+            </div>
+
+            <!-- 颜色设置 -->
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">文字颜色</label>
+                <div class="flex items-center gap-1.5">
+                  <input v-model="textIconForm.color" type="color" class="w-8 h-8 rounded border-0 cursor-pointer p-0 bg-transparent flex-shrink-0">
+                  <input v-model="textIconForm.color" type="text" class="w-full px-2 py-1 text-xs bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white" placeholder="#FFFFFF">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">背景颜色</label>
+                <div class="flex items-center gap-1.5">
+                  <input v-model="textIconForm.bgColor" type="color" class="w-8 h-8 rounded border-0 cursor-pointer p-0 bg-transparent flex-shrink-0">
+                  <input v-model="textIconForm.bgColor" type="text" class="w-full px-2 py-1 text-xs bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white" placeholder="#3B82F6">
+                </div>
+              </div>
+            </div>
+
+            <!-- 预设色彩推荐 -->
+            <div>
+              <label class="block text-[10px] text-gray-400 mb-1">推荐色彩组合</label>
+              <div class="flex flex-wrap gap-1.5">
+                <button 
+                  v-for="preset in colorPresets" 
+                  :key="preset.bg"
+                  type="button"
+                  @click="applyPreset(preset)"
+                  class="w-5 h-5 rounded-md border border-white/10 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+                  :style="{ backgroundColor: preset.bg }"
+                  :title="preset.name"
+                >
+                  <span class="text-[8px] font-bold" :style="{ color: preset.text }">Aa</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 圆角滑块 -->
+            <div>
+              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <span>圆角大小</span>
+                <span>{{ textIconForm.radius }}px</span>
+              </div>
+              <input 
+                v-model.number="textIconForm.radius" 
+                type="range" 
+                min="0" 
+                max="24" 
+                class="w-full accent-primary bg-gray-200 dark:bg-gray-700 h-1 rounded-lg cursor-pointer"
+              >
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="flex gap-3 pt-4">
@@ -120,7 +244,7 @@
 <script setup>
 import { reactive, ref, watch, onMounted, onUnmounted } from 'vue'
 import BaseModal from './BaseModal.vue'
-import { getIconUrl } from '../../utils/icon.js'
+import { getIconUrl, buildTextIconString } from '../../utils/icon.js'
 
 const props = defineProps({
   show: Boolean,
@@ -146,6 +270,52 @@ const form = reactive({
 })
 
 const iconFetching = ref(false)
+
+const iconType = ref('image') // 'image' | 'text'
+const textIconForm = reactive({
+  text: '',
+  color: '#ffffff',
+  bgColor: '#3b82f6',
+  radius: 8
+})
+
+const colorPresets = [
+  { name: '蓝色', bg: '#3b82f6', text: '#ffffff' },
+  { name: '绿色', bg: '#10b981', text: '#ffffff' },
+  { name: '紫色', bg: '#8b5cf6', text: '#ffffff' },
+  { name: '玫瑰', bg: '#f43f5e', text: '#ffffff' },
+  { name: '琥珀', bg: '#f59e0b', text: '#ffffff' },
+  { name: '靛青', bg: '#6366f1', text: '#ffffff' },
+  { name: '青色', bg: '#14b8a6', text: '#ffffff' },
+  { name: '深灰', bg: '#374151', text: '#ffffff' },
+  { name: '薄荷', bg: '#a7f3d0', text: '#065f46' },
+  { name: '樱花', bg: '#fbcfe8', text: '#9d174d' }
+]
+
+const applyPreset = (preset) => {
+  textIconForm.color = preset.text
+  textIconForm.bgColor = preset.bg
+}
+
+const handleSubmit = () => {
+  const submitData = { ...form }
+  if (iconType.value === 'text') {
+    submitData.iconUrl = buildTextIconString({
+      text: textIconForm.text.trim() || form.name.slice(0, 2).toUpperCase(),
+      color: textIconForm.color,
+      bgColor: textIconForm.bgColor,
+      radius: textIconForm.radius
+    })
+  }
+  emit('submit', submitData)
+}
+
+// 自动根据输入的网站名称推荐图标文字
+watch(() => form.name, (newName) => {
+  if (newName && !textIconForm.text) {
+    textIconForm.text = newName.slice(0, 2).toUpperCase()
+  }
+})
 
 // 自动获取图标
 const autoFetchIcon = async () => {
@@ -197,6 +367,11 @@ watch(() => props.show, (newVal) => {
     form.lanUrl = ''
     form.darkIcon = false
     showCategoryDropdown.value = false
+    iconType.value = 'image'
+    textIconForm.text = ''
+    textIconForm.color = '#ffffff'
+    textIconForm.bgColor = '#3b82f6'
+    textIconForm.radius = 8
   }
 })
 </script>

@@ -265,3 +265,36 @@ export function getFallbackIconUrls(url) {
 
   return urls
 }
+
+/**
+ * 检查图标链接是否为自定义文字图标格式
+ * @param {string} iconUrl - 图标链接
+ * @returns {boolean}
+ */
+export function isTextIcon(iconUrl) {
+  return typeof iconUrl === 'string' && iconUrl.startsWith('text-icon:')
+}
+
+/**
+ * 将文字图标的 JSON 字符串解析为配置对象
+ * @param {string} iconUrl - 图标链接
+ * @returns {Object|null} 配置对象
+ */
+export function parseTextIcon(iconUrl) {
+  if (!isTextIcon(iconUrl)) return null
+  try {
+    return JSON.parse(iconUrl.substring('text-icon:'.length))
+  } catch (e) {
+    return { text: '', color: '#ffffff', bgColor: '#4f46e5', radius: 8 }
+  }
+}
+
+/**
+ * 将配置对象打包成文字图标的字符串
+ * @param {Object} config - 配置对象 { text, color, bgColor, radius }
+ * @returns {string} 打包后的字符串
+ */
+export function buildTextIconString(config) {
+  return `text-icon:${JSON.stringify(config)}`
+}
+
