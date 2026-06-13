@@ -2,7 +2,12 @@
   <teleport to="body">
     <div
       v-if="visible"
-      :style="{ left: x + 'px', top: y + 'px' }"
+      ref="mainMenuRef"
+      :style="{ 
+        left: adjustedX + 'px', 
+        top: adjustedY + 'px',
+        visibility: isPositioned ? 'visible' : 'hidden'
+      }"
       class="context-menu fixed z-50 bg-gray-800/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1 min-w-[160px]"
       @click.stop
     >
@@ -30,7 +35,9 @@
           <!-- 子菜单 -->
           <div
             v-if="activeSubmenu === index"
-            class="submenu absolute left-full top-0 ml-1 bg-gray-800/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1 min-w-[160px]"
+            ref="submenuRef"
+            :style="submenuStyles"
+            class="submenu absolute bg-gray-800/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1 min-w-[160px]"
             @mouseenter="keepSubmenu(index)"
             @mouseleave="hideSubmenu"
           >
@@ -60,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 
 const props = defineProps({
   visible: Boolean,
@@ -73,6 +80,122 @@ const emit = defineEmits(['close'])
 
 const activeSubmenu = ref(-1)
 let submenuTimeout = null
+
+// 主菜单定位相关
+const mainMenuRef = ref(null)
+const isPositioned = ref(false)
+const adjustedX = ref(0)
+const adjustedY = ref(0)
+
+// 子菜单定位和样式相关
+const submenuRef = ref(null)
+const submenuStyles = ref({})
+
+// 调整主菜单位置，防止溢出屏幕
+const adjustMainMenuPosition = async () => {
+  if (!props.visible) {
+    isPositioned.value = false
+    activeSubmenu.value = -1
+    return
+  }
+
+  adjustedX.value = props.x
+  adjustedY.value = props.y
+
+  await nextTick()
+
+  if (mainMenuRef.value) {
+    const rect = mainMenuRef.value.getBoundingClientRect()
+    const winWidth = window.innerWidth
+    const winHeight = window.innerHeight
+
+    // 如果右侧溢出
+    if (props.x + rect.width > winWidth) {
+      adjustedX.value = Math.max(10, winWidth - rect.width - 10)
+    }
+
+    // 如果底部溢出
+    if (props.y + rect.height > winHeight) {
+      adjustedY.value = Math.max(10, winHeight - rect.height - 10)
+    }
+
+    isPositioned.value = true
+  }
+}
+
+// 监听菜单显示状态和坐标变化
+watch(() => props.visible, (newVal) => {
+  if (newVal) {
+    adjustMainMenuPosition()
+    // 添加全局点击监听，点击外部关闭菜单
+    setTimeout(() => {
+      document.addEventListener('click', handleClickOutside)
+      document.addEventListener('contextmenu', handleClickOutside)
+    }, 0)
+  } else {
+    isPositioned.value = false
+    activeSubmenu.value = -1
+    document.removeEventListener('click', handleClickOutside)
+    document.removeEventListener('contextmenu', handleClickOutside)
+  }
+})
+
+watch(() => [props.x, props.y], () => {
+  if (props.visible) {
+    adjustMainMenuPosition()
+  }
+})
+
+// 监听子菜单展示并计算位置
+watch(activeSubmenu, async (newIndex) => {
+  if (newIndex === -1) {
+    submenuStyles.value = {}
+    return
+  }
+
+  // 初始默认样式：向右展开，顶部对齐，限制最大高度，允许滚动
+  submenuStyles.value = {
+    left: '100%',
+    right: 'auto',
+    top: '0px',
+    marginLeft: '4px',
+    marginRight: '0px',
+    maxHeight: 'min(380px, calc(100vh - 40px))',
+    overflowY: 'auto'
+  }
+
+  await nextTick()
+
+  const el = Array.isArray(submenuRef.value) ? submenuRef.value[0] : submenuRef.value
+
+  if (el) {
+    const rect = el.getBoundingClientRect()
+    const winWidth = window.innerWidth
+    const winHeight = window.innerHeight
+
+    let newStyles = { ...submenuStyles.value }
+
+    // 1. 水平防溢出：如果子菜单右侧溢出屏幕，则改为向左展开
+    if (rect.right > winWidth) {
+      newStyles.left = 'auto'
+      newStyles.right = '100%'
+      newStyles.marginLeft = '0px'
+      newStyles.marginRight = '4px'
+    }
+
+    // 2. 垂直防溢出：如果子菜单底部溢出屏幕，则向上平移
+    if (rect.bottom > winHeight) {
+      const overflow = rect.bottom - winHeight
+      const parentRect = el.parentElement.getBoundingClientRect()
+      const maxMoveUp = parentRect.top - 10 // 距离屏幕顶部保留10px
+      const moveUp = Math.max(0, Math.min(overflow + 10, maxMoveUp))
+
+      newStyles.top = `-${moveUp}px`
+    }
+
+    submenuStyles.value = newStyles
+  }
+})
 
 // 显示子菜单
 const showSubmenu = (item, index) => {
@@ -102,20 +225,6 @@ const handleAction = (action) => {
   }
   emit('close')
 }
-
-// 监听 visible 变化，添加/移除全局点击监听
-watch(() => props.visible, (newVal) => {
-  if (newVal) {
-    // 添加全局点击监听，点击外部关闭菜单
-    setTimeout(() => {
-      document.addEventListener('click', handleClickOutside)
-      document.addEventListener('contextmenu', handleClickOutside)
-    }, 0)
-  } else {
-    document.removeEventListener('click', handleClickOutside)
-    document.removeEventListener('contextmenu', handleClickOutside)
-  }
-})
 
 // 点击外部关闭菜单
 const handleClickOutside = () => {
@@ -147,5 +256,20 @@ onUnmounted(() => {
 .menu-item:hover,
 .submenu-item:hover {
   animation: none;
+}
+
+/* 自定义子菜单滚动条样式 */
+.submenu::-webkit-scrollbar {
+  width: 5px;
+}
+.submenu::-webkit-scrollbar-track {
+  background: transparent;
+}
+.submenu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 99px;
+}
+.submenu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 </style>
