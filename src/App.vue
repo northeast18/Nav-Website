@@ -1840,6 +1840,36 @@ const contextMenuItems = computed(() => {
     })
   }
 
+  const hasBlacklist = customOrder.value._frequentBlacklist && customOrder.value._frequentBlacklist.length > 0
+
+  if (activeCategory.value === 'frequent') {
+    const menu = [
+      {
+        label: '编辑',
+        action: () => openEditModal(contextMenuItem.value)
+      },
+      {
+        label: '从常用中移除',
+        action: () => removeFromFrequent(contextMenuItem.value)
+      },
+      {
+        label: '移动到...',
+        submenu: moveSubmenu
+      },
+      {
+        label: '从数据库彻底删除',
+        action: () => deleteWebsite(contextMenuItem.value)
+      }
+    ]
+    if (hasBlacklist) {
+      menu.push({
+        label: '恢复所有被隐藏的常用网站',
+        action: restoreAllFrequent
+      })
+    }
+    return menu
+  }
+
   return [
     {
       label: '编辑',
@@ -1855,6 +1885,41 @@ const contextMenuItems = computed(() => {
     }
   ]
 })
+
+// 从常用中移除（加入黑名单）
+const removeFromFrequent = (item) => {
+  const blacklist = [...(customOrder.value._frequentBlacklist || [])]
+  if (!blacklist.includes(item.url)) {
+    blacklist.push(item.url)
+    customOrder.value = {
+      ...customOrder.value,
+      _frequentBlacklist: blacklist
+    }
+    // 保存到 localStorage
+    localStorage.setItem('navCustomOrder', JSON.stringify(customOrder.value))
+    // 调度同步到云端
+    scheduleSync()
+    
+    // 触发常用列表刷新
+    draggablesList.value = [...filteredItems.value]
+  }
+}
+
+// 恢复所有被隐藏的常用网站（清空黑名单）
+const restoreAllFrequent = () => {
+  customOrder.value = {
+    ...customOrder.value,
+    _frequentBlacklist: []
+  }
+  // 保存到 localStorage
+  localStorage.setItem('navCustomOrder', JSON.stringify(customOrder.value))
+  // 调度同步到云端
+  scheduleSync()
+  
+  // 触发常用列表刷新
+  draggablesList.value = [...filteredItems.value]
+  alert('已成功恢复所有被隐藏的常用网站！')
+}
 
 // 打开编辑弹窗
 const openEditModal = (item) => {
@@ -2418,8 +2483,19 @@ const filteredItems = computed(() => {
       items = items.concat(category.items)
     })
   } else if (activeCategory.value === 'frequent') {
-    // 常用：显示最常访问的网站
-    allowedCategories.forEach(category => items = items.concat(category.items))
+    // 常用：显示最常访问的网站 (去重且过滤已隐藏的网站)
+    const seenUrls = new Set()
+    const blacklist = customOrder.value._frequentBlacklist || []
+    allowedCategories.forEach(category => {
+      category.items.forEach(item => {
+        if (!seenUrls.has(item.url)) {
+          seenUrls.add(item.url)
+          if (!blacklist.includes(item.url)) {
+            items.push(item)
+          }
+        }
+      })
+    })
     // 按点击次数排序，取前 16 个
     items = items
       .sort((a, b) => (clickCounts.value[b.url] || 0) - (clickCounts.value[a.url] || 0))
