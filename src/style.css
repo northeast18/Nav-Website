@@ -64,7 +64,7 @@ body {
   
   /* 弹窗包装器 */
   .glass-modal {
-    @apply relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 w-full transform transition-all backdrop-blur-md;
+    @apply relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 w-full transform transition-all backdrop-blur-md;
   }
   
   /* 玻璃按钮 */
@@ -99,4 +99,20 @@ body {
   .btn-action-cancel {
     @apply btn-action bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300;
   }
+}
+
+/* 自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.35);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.55);
 }

@@ -217,12 +217,12 @@
     </footer>
 
     <!-- 5. 友情链接弹窗 -->
-    <div v-if="showFriendModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showFriendModal = false">
-      <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+    <div v-if="showFriendModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" @click.self="showFriendModal = false">
+      <div class="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-none"></div>
 
-      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-5 w-full max-w-md transform transition-all">
+      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-5 w-full max-w-md my-auto max-h-[90dvh] sm:max-h-[85dvh] overflow-y-auto transform transition-all custom-scrollbar">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
           <div class="flex justify-between items-center mb-4">
@@ -280,15 +280,15 @@
     </div>
 
     <!-- 6. 密码验证弹窗 -->
-    <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="cancelPassword">
-      <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+    <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" @click.self="cancelPassword">
+      <div class="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-none"></div>
 
-      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-8 w-full max-w-md transform transition-all">
+      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 w-full max-w-md my-auto max-h-[90dvh] sm:max-h-[85dvh] overflow-y-auto transform transition-all custom-scrollbar">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-red-600/5 via-transparent to-orange-600/5 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-red-600/5 via-transparent to-orange-600/5 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
-          <div class="flex justify-between items-center mb-8">
+          <div class="flex justify-between items-center mb-6 sm:mb-8">
             <h3 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
               <svg class="w-8 h-8 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -334,15 +334,15 @@
     </div>
 
     <!-- 7. 云同步弹窗 -->
-    <div v-if="showSyncModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showSyncModal = false">
-      <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+    <div v-if="showSyncModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" @click.self="showSyncModal = false">
+      <div class="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-none"></div>
 
-      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-8 w-full max-w-md transform transition-all">
+      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 w-full max-w-md my-auto max-h-[90dvh] sm:max-h-[85dvh] overflow-y-auto transform transition-all custom-scrollbar">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
-          <div class="flex justify-between items-center mb-8">
+          <div class="flex justify-between items-center mb-6 sm:mb-8">
             <h3 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
               <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -510,15 +510,15 @@
     <ThemeModal :show="showThemeModal" @close="showThemeModal = false" />
 
     <!-- 9. 编辑网站弹窗 -->
-    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showEditModal = false">
-      <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" @click.self="showEditModal = false">
+      <div class="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-none"></div>
 
-      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-md transform transition-all">
+      <div class="relative bg-white/90 dark:bg-gray-800/95 border border-gray-200 dark:border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 w-full max-w-md my-auto max-h-[90dvh] sm:max-h-[85dvh] flex flex-col transform transition-all">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
 
-        <div class="relative z-10">
-          <div class="flex justify-between items-center mb-6">
+        <div class="relative z-10 flex flex-col max-h-full min-h-0">
+          <div class="flex justify-between items-center mb-4 sm:mb-6 flex-shrink-0">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -530,7 +530,7 @@
             </button>
           </div>
 
-          <div class="space-y-4">
+          <div class="space-y-4 overflow-y-auto flex-1 min-h-0 pr-1 -mr-1 custom-scrollbar">
             <!-- 名称 -->
             <div>
               <label class="block text-gray-500 dark:text-gray-400 text-sm mb-2">名称</label>

@@ -1,10 +1,10 @@
 <template>
-  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="$emit('close')">
-    <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" @click.self="$emit('close')">
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-none"></div>
 
-    <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden transform transition-all flex flex-col">
+    <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl my-auto max-h-[90dvh] sm:max-h-[85dvh] overflow-hidden transform transition-all flex flex-col">
       <!-- 光效背景 -->
-      <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 rounded-3xl pointer-events-none"></div>
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
 
       <div class="relative z-10 flex flex-col h-full">
         <!-- 头部 -->

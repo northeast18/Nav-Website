@@ -1,14 +1,14 @@
 <template>
-  <div v-if="show" class="fixed inset-0 flex items-center justify-center p-4" :class="zIndex" @click.self="closeModal">
-    <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+  <div v-if="show" class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" :class="zIndex" @click.self="closeModal">
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-none"></div>
     
-    <div class="glass-modal" :class="maxWidthClass">
+    <div class="glass-modal my-auto max-h-[90dvh] sm:max-h-[85dvh] flex flex-col" :class="maxWidthClass">
       <!-- 光效背景 -->
-      <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-3xl pointer-events-none"></div>
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary-to/5 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
 
-      <div class="relative z-10">
+      <div class="relative z-10 flex flex-col max-h-full min-h-0">
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-4 sm:mb-6 flex-shrink-0">
           <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <slot name="icon">
               <span class="w-1 h-6 bg-gradient-to-b from-primary to-primary-to rounded-full shadow-lg shadow-primary/50"></span>
@@ -21,7 +21,9 @@
         </div>
 
         <!-- Body -->
-        <slot></slot>
+        <div class="overflow-y-auto flex-1 min-h-0 pr-1 -mr-1 custom-scrollbar">
+          <slot></slot>
+        </div>
       </div>
     </div>
   </div>

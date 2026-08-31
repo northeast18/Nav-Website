@@ -1,10 +1,10 @@
 <template>
-  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="$emit('close')">
-    <div class="absolute inset-0 bg-black/70 backdrop-blur-md" @click="$emit('close')"></div>
+  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" @click.self="$emit('close')">
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-none"></div>
 
-      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div class="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 w-full max-w-md my-auto max-h-[90dvh] sm:max-h-[85dvh] overflow-y-auto custom-scrollbar">
         <!-- 光效背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary-to/10 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary-to/10 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
           <!-- 标题 -->
