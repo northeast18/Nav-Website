@@ -2449,12 +2449,23 @@ const handleSearch = () => {
 }
 
 const getIconSrc = (item) => {
-  if (item.iconUrl) return item.iconUrl
+  if (item.iconUrl) {
+    if (item.iconUrl.startsWith('/') || item.iconUrl.startsWith('data:') || item.iconUrl.startsWith('text-icon:')) {
+      return item.iconUrl
+    }
+    if (item.iconUrl.includes('google.com/s2/favicons') || item.iconUrl.includes('favicon.im')) {
+      try {
+        const host = new URL(item.url || item.iconUrl).hostname.replace(/^www\./, '')
+        if (host) return `/api/icon?domain=${host}`
+      } catch (e) {}
+    }
+    return item.iconUrl
+  }
   try {
-    let domain = item.url
+    let domain = item.url || ''
     if (!domain.startsWith('http')) domain = 'https://' + domain
-    const hostname = new URL(domain).hostname
-    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`
+    const hostname = new URL(domain).hostname.replace(/^www\./, '')
+    return hostname ? `/api/icon?domain=${hostname}` : 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f310.png'
   } catch (e) {
     return 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f310.png'
   }

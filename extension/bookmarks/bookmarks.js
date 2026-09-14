@@ -155,7 +155,7 @@ async function importSelectedBookmarks() {
         name: cb.dataset.title || hostname,
         url: url,
         desc: '',
-        iconUrl: `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`,
+        iconUrl: `/api/icon?domain=${hostname}`,
         category: '常用网站'
       }
     })

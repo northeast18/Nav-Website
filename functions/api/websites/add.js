@@ -69,12 +69,14 @@ export async function onRequest(context) {
     return jsonResponse({ error: '缺少必填字段: name, url, category' }, 400)
   }
 
-  // 如果没有提供 iconUrl，自动根据 URL 获取
+  // 如果没有提供 iconUrl，自动使用服务端图标服务
   let iconUrl = data.iconUrl || ''
   if (!iconUrl && data.url) {
     try {
       const hostname = new URL(data.url.startsWith('http') ? data.url : 'https://' + data.url).hostname.replace(/^www\./, '')
-      iconUrl = `https://${hostname}/favicon.ico`
+      if (hostname) {
+        iconUrl = `/api/icon?domain=${hostname}`
+      }
     } catch (e) {
       // ignore
     }

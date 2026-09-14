@@ -204,8 +204,8 @@ function getIconUrl(url, iconUrl = '') {
     // 3a. 内网地址直接使用原生 favicon
     return `https://${hostname}/favicon.ico`
   } else {
-    // 3b. 公网地址优先使用 favicon.im 获取图标
-    return `https://favicon.im/${hostname}`
+    // 3b. 公网地址优先使用服务端的 /api/icon 接口
+    return `/api/icon?domain=${hostname}`
   }
 }
 

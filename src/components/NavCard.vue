@@ -53,7 +53,7 @@
         <!-- 显示图片 -->
         <img
           v-else-if="!imageLoadError"
-          :src="iconSrc"
+          :src="currentIconSrc"
           @error="handleImageError"
           class="h-full w-full object-contain rounded-xl drop-shadow-lg transition-all duration-300"
           :class="{ 'invert brightness-0 opacity-90': item.darkIcon }"
@@ -124,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { getIconUrl, isTextIcon, parseTextIcon, formatTextIconLines } from '../utils/icon'
 
 const props = defineProps({
@@ -144,6 +144,18 @@ const emit = defineEmits(['toggle-favorite', 'record-visit', 'contextmenu'])
 
 const showModal = ref(false)
 const imageLoadError = ref(false)
+const fallbackAttempted = ref(false)
+const currentIconSrc = ref('')
+
+watch(
+  () => [props.item?.url, props.item?.iconUrl],
+  () => {
+    fallbackAttempted.value = false
+    imageLoadError.value = false
+    currentIconSrc.value = getIconUrl(props.item?.url, props.item?.iconUrl)
+  },
+  { immediate: true }
+)
 
 const handleClick = () => {
   if (props.item.lanUrl) {
@@ -224,6 +236,18 @@ const lastVisitTime = computed(() => {
 })
 
 const handleImageError = () => {
+  if (!fallbackAttempted.value && props.item?.url) {
+    fallbackAttempted.value = true
+    try {
+      let raw = props.item.url
+      if (!raw.startsWith('http')) raw = 'https://' + raw
+      const host = new URL(raw).hostname.replace(/^www\./, '')
+      if (host && !currentIconSrc.value.includes(`/api/icon?domain=${host}`)) {
+        currentIconSrc.value = `/api/icon?domain=${host}`
+        return
+      }
+    } catch (e) {}
+  }
   imageLoadError.value = true
 }
 </script>

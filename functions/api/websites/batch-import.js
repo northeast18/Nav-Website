@@ -5,7 +5,7 @@ function getAutoIconUrl(url) {
   if (!url) return ''
   try {
     const hostname = new URL(url.startsWith('http') ? url : 'https://' + url).hostname.replace(/^www\./, '')
-    return `https://${hostname}/favicon.ico`
+    return hostname ? `/api/icon?domain=${hostname}` : ''
   } catch (e) {
     return ''
   }

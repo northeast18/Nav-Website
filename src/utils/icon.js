@@ -200,10 +200,39 @@ function getNativeFavicon(url) {
  * @returns {string} 图标URL
  */
 export function getIconUrl(url, iconUrl = '') {
-  // 1. 优先用手动填的链接
-  if (iconUrl) return iconUrl
+  // 1. 如果有手动设置的链接
+  if (iconUrl) {
+    // 本地存储路径、Base64 或自定义文字图标直接使用
+    if (iconUrl.startsWith('/') || iconUrl.startsWith('data:') || iconUrl.startsWith('text-icon:')) {
+      return iconUrl
+    }
 
-  // 2. 尝试 dashboardicons 本地图标（仅针对有映射的）
+    // 检查是否是历史存留的、在国内移动端易被阻断的第三方图标源 (如 Google Favicon、favicon.im 等)
+    if (
+      iconUrl.includes('google.com/s2/favicons') ||
+      iconUrl.includes('favicon.im') ||
+      iconUrl.includes('api.iowen.cn') ||
+      iconUrl.includes('icon.horse')
+    ) {
+      let hostname = ''
+      try {
+        const parsed = new URL(iconUrl)
+        hostname = parsed.searchParams.get('domain') || ''
+      } catch (e) {}
+
+      if (!hostname) {
+        hostname = extractHostname(url || iconUrl)
+      }
+
+      if (hostname) {
+        return `/api/icon?domain=${hostname}`
+      }
+    }
+
+    return iconUrl
+  }
+
+  // 2. 尝试 dashboardicons 本地图标（仅针对有映射的已知服务）
   const dashboardIconName = findDashboardIcon(url)
   if (dashboardIconName) {
     return `https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/${dashboardIconName}.svg`
@@ -219,8 +248,8 @@ export function getIconUrl(url, iconUrl = '') {
     // 3a. 内网地址直接使用原生 favicon
     return `https://${hostname}/favicon.ico`
   } else {
-    // 3b. 公网地址优先使用 favicon.im 获取图标
-    return `https://favicon.im/${hostname}`
+    // 3b. 公网地址统一使用本站 Cloudflare 服务端代抓与持久化缓存接口
+    return `/api/icon?domain=${hostname}`
   }
 }
 
@@ -228,7 +257,8 @@ export function getIconUrl(url, iconUrl = '') {
  * 获取 favicon URL（用于兼容性场景）
  */
 export function getFaviconUrl(url) {
-  return getNativeFavicon(url) || ''
+  const hostname = extractHostname(url)
+  return hostname ? `/api/icon?domain=${hostname}` : ''
 }
 
 /**
@@ -256,10 +286,9 @@ export function getFallbackIconUrls(url) {
     if (isLocal) {
       urls.push(`https://${hostname}/favicon.ico`)
     } else {
-      urls.push(`https://favicon.im/${hostname}`)
-      urls.push(`https://icon.horse/icon/${hostname}`)
+      urls.push(`/api/icon?domain=${hostname}`)
       urls.push(`https://${hostname}/favicon.ico`)
-      urls.push(`https://www.google.com/s2/favicons?domain=${hostname}&sz=128`)
+      urls.push(`https://icons.duckduckgo.com/ip3/${hostname}.ico`)
     }
   }
 

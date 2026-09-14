@@ -295,8 +295,8 @@ const parseBookmarks = (html) => {
 // 获取图标 URL
 const getIconUrl = (url) => {
   try {
-    const hostname = new URL(url).hostname
-    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`
+    const hostname = new URL(url).hostname.replace(/^www\./, '')
+    return hostname ? `/api/icon?domain=${hostname}` : 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f310.png'
   } catch {
     return 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f310.png'
   }
