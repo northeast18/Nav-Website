@@ -103,7 +103,7 @@ export async function onRequest(context) {
         cached.writeHttpMetadata(headers)
         headers.set('etag', cached.httpEtag)
         headers.set('Cache-Control', 'public, max-age=2592000, immutable') // 缓存30天
-        headers.set('Access-Control-Allow-Origin': '*')
+        headers.set('Access-Control-Allow-Origin', '*')
         return new Response(cached.body, { headers })
       }
     } catch (e) {
