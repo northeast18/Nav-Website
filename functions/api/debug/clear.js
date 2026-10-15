@@ -1,3 +1,5 @@
+import { getPrivatePassword } from '../_middleware.js'
+
 // 清空数据库 - 危险操作，需要密码验证
 export async function onRequest(context) {
   const { request, env } = context
@@ -25,7 +27,7 @@ export async function onRequest(context) {
     }
 
     const password = authHeader.replace('Bearer ', '')
-    const correctPassword = env.PRIVATE_PASSWORD
+    const correctPassword = await getPrivatePassword(env)
 
     if (!correctPassword || password !== correctPassword) {
       return jsonResponse({ error: '密码错误' }, 401)

@@ -20,6 +20,7 @@
           :is-auto-filling="isAutoFilling"
           @open-sync="showSyncModal = true"
           @open-theme="showThemeModal = true"
+          @open-password-management="openPasswordModalWithTab('admin')"
           @toggle-edit="toggleCategoryEditMode"
           @open-import="showBookmarkImport = true"
           @open-add-website="openAddWebsiteModal"
@@ -452,12 +453,20 @@
                   <p class="text-gray-900 dark:text-white font-medium">{{ currentUser?.username }}</p>
                   <p class="text-gray-500 dark:text-gray-400 text-xs">已登录</p>
                 </div>
-                <button
-                  @click="handleLogout"
-                  class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 rounded-lg text-xs transition-colors"
-                >
-                  退出
-                </button>
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="openPasswordModalWithTab('account')"
+                    class="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-medium transition-colors"
+                  >
+                    修改密码
+                  </button>
+                  <button
+                    @click="handleLogout"
+                    class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 rounded-lg text-xs transition-colors"
+                  >
+                    退出
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -771,6 +780,20 @@
       @close="showAddWebsiteModal = false"
       @submit="submitAddWebsite"
     />
+
+    <!-- 密码与安全管理弹窗 -->
+    <PasswordManagementModal
+      :show="showPasswordManagementModal"
+      :is-logged-in="isLoggedIn"
+      :current-user="currentUser"
+      :user-token="userToken"
+      :initial-tab="passwordManagementInitialTab"
+      @close="showPasswordManagementModal = false"
+      @admin-password-changed="handleAdminPasswordChanged"
+      @private-password-changed="handlePrivatePasswordChanged"
+      @user-password-changed="handleUserPasswordChanged"
+      @open-sync="showSyncModal = true"
+    />
   </div>
 </template>
 
@@ -788,6 +811,7 @@ import TopBar from './components/TopBar.vue'
 import SearchPanel from './components/SearchPanel.vue'
 import PasswordModal from './components/modals/PasswordModal.vue'
 import AddWebsiteModal from './components/modals/AddWebsiteModal.vue'
+import PasswordManagementModal from './components/modals/PasswordManagementModal.vue'
 import { isTextIcon, parseTextIcon, buildTextIconString, formatTextIconLines } from './utils/icon'
 
 // 初始化主题系统
@@ -817,6 +841,38 @@ const showThemeModal = ref(false) // 控制主题弹窗
 const showEditModal = ref(false) // 控制编辑弹窗
 const showBookmarkImport = ref(false) // 控制书签导入弹窗
 const showAddWebsiteModal = ref(false) // 控制添加网站弹窗
+const showPasswordManagementModal = ref(false) // 控制密码管理弹窗
+const passwordManagementInitialTab = ref('admin') // 密码管理当前激活标签
+
+const openPasswordModalWithTab = (tab = 'admin') => {
+  passwordManagementInitialTab.value = tab
+  showPasswordManagementModal.value = true
+}
+
+const handleAdminPasswordChanged = (newPassword) => {
+  cachedAdminPassword.value = newPassword
+  adminPasswordExpiry.value = Date.now() + PASSWORD_CACHE_DURATION
+  syncStatus.value = { type: 'success', message: '✅ 管理员密码已更新' }
+  setTimeout(() => syncStatus.value = null, 3000)
+}
+
+const handlePrivatePasswordChanged = () => {
+  isPrivateUnlocked.value = false
+  syncStatus.value = { type: 'success', message: '✅ 隐私密码已更新' }
+  setTimeout(() => syncStatus.value = null, 3000)
+}
+
+const handleUserPasswordChanged = ({ token, userId, username }) => {
+  userToken.value = token
+  currentUser.value = { username, userId }
+  localStorage.setItem('userToken', token)
+  localStorage.setItem('currentUser', JSON.stringify({ username, userId }))
+  localStorage.setItem('syncAuthToken', token)
+  syncAuthToken.value = token
+  syncStatus.value = { type: 'success', message: '✅ 账号密码已更新' }
+  setTimeout(() => syncStatus.value = null, 3000)
+}
+
 const addWebsiteForm = ref({
   name: '',
   url: '',

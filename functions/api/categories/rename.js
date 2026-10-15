@@ -2,7 +2,8 @@ import {
   getClientIp,
   checkRateLimit,
   recordFailedAttempt,
-  clearFailedAttempts
+  clearFailedAttempts,
+  getAdminPassword
 } from '../_middleware.js'
 
 // 重命名分类
@@ -41,7 +42,7 @@ export async function onRequest(context) {
   }
 
   const password = authHeader.replace('Bearer ', '')
-  const correctPassword = env.ADMIN_PASSWORD
+  const correctPassword = await getAdminPassword(env)
 
   if (!correctPassword || password !== correctPassword) {
     await recordFailedAttempt(env, clientIp, 'admin')

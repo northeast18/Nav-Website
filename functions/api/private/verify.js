@@ -2,7 +2,8 @@ import {
   getClientIp,
   checkRateLimit,
   recordFailedAttempt,
-  clearFailedAttempts
+  clearFailedAttempts,
+  getPrivatePassword
 } from '../_middleware.js'
 
 // 私密分类密码验证 API
@@ -41,8 +42,8 @@ export async function onRequest(context) {
       }, 429)
     }
 
-    // 从环境变量读取正确密码
-    const correctPassword = env.PRIVATE_PASSWORD
+    // 读取正确密码（优先 KV，回退环境变量）
+    const correctPassword = await getPrivatePassword(env)
 
     if (!correctPassword) {
       return jsonResponse({ error: '服务器配置错误：密码未设置' }, 500)

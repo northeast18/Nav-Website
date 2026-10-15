@@ -1,3 +1,5 @@
+import { getAdminPassword } from '../_middleware.js'
+
 // 上传图片到 R2 (兼容 PicList 命名格式)
 export async function onRequest(context) {
   const { request, env } = context
@@ -24,7 +26,8 @@ export async function onRequest(context) {
   }
 
   const adminPassword = authHeader.replace('Bearer ', '')
-  if (adminPassword !== env.ADMIN_PASSWORD) {
+  const correctPassword = await getAdminPassword(env)
+  if (!correctPassword || adminPassword !== correctPassword) {
     return jsonResponse({ error: '管理员密码错误' }, 401)
   }
 

@@ -13,7 +13,8 @@ import {
   getClientIp,
   checkRateLimit,
   recordFailedAttempt,
-  clearFailedAttempts
+  clearFailedAttempts,
+  getAdminPassword
 } from '../_middleware.js'
 
 export async function onRequest(context) {
@@ -44,7 +45,8 @@ export async function onRequest(context) {
 
   let isAuthenticated = false
 
-  if (token === env.ADMIN_PASSWORD) {
+  const correctAdminPassword = await getAdminPassword(env)
+  if (token === correctAdminPassword) {
     isAuthenticated = true
   } else if (token) {
     // 尝试作为用户 Session 验证

@@ -2,7 +2,8 @@ import {
   getClientIp,
   checkRateLimit,
   recordFailedAttempt,
-  clearFailedAttempts
+  clearFailedAttempts,
+  getAdminPassword
 } from '../_middleware.js'
 
 // 更新网站信息
@@ -41,7 +42,8 @@ export async function onRequest(context) {
   }
 
   const adminPassword = authHeader.replace('Bearer ', '')
-  if (adminPassword !== env.ADMIN_PASSWORD) {
+  const correctPassword = await getAdminPassword(env)
+  if (!correctPassword || adminPassword !== correctPassword) {
     await recordFailedAttempt(env, clientIp, 'admin')
     return jsonResponse({ error: '管理员密码错误' }, 401)
   }

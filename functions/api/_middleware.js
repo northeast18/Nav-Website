@@ -497,3 +497,41 @@ export function corsOptionsResponse(methods = ['GET', 'POST', 'OPTIONS']) {
     }
   })
 }
+
+// ============================================================================
+// 密码获取（支持 KV 动态修改）
+// ============================================================================
+
+/**
+ * 获取管理员密码（优先从 KV 读取，否则用环境变量）
+ * @param {object} env - Cloudflare 环境对象
+ * @returns {Promise<string|null>} 管理员密码
+ */
+export async function getAdminPassword(env) {
+  try {
+    if (env.NAV_KV) {
+      const kvPassword = await env.NAV_KV.get('admin_password')
+      if (kvPassword) return kvPassword
+    }
+  } catch (e) {
+    console.error('读取 KV 管理员密码失败:', e)
+  }
+  return env.ADMIN_PASSWORD || null
+}
+
+/**
+ * 获取隐私密码（优先从 KV 读取，否则用环境变量）
+ * @param {object} env - Cloudflare 环境对象
+ * @returns {Promise<string|null>} 隐私密码
+ */
+export async function getPrivatePassword(env) {
+  try {
+    if (env.NAV_KV) {
+      const kvPassword = await env.NAV_KV.get('private_password')
+      if (kvPassword) return kvPassword
+    }
+  } catch (e) {
+    console.error('读取 KV 隐私密码失败:', e)
+  }
+  return env.PRIVATE_PASSWORD || null
+}
