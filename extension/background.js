@@ -393,6 +393,13 @@ async function quickSave(url, title, tab) {
         showNotification('收藏成功', msg)
       }
     } else {
+      if (response.status === 401) {
+        await chrome.storage.local.remove(['userToken'])
+        showNotification('登录已失效', '账号密码已修改或登录已过期，请重新登录', () => {
+          chrome.runtime.openOptionsPage()
+        })
+        throw new Error('登录已失效，请在设置中重新登录')
+      }
       throw new Error(result.error || '收藏失败')
     }
 
@@ -476,6 +483,13 @@ async function customSave(url, title, customIconUrl, tab) {
         showNotification('收藏成功', msg)
       }
     } else {
+      if (response.status === 401) {
+        await chrome.storage.local.remove(['userToken'])
+        showNotification('登录已失效', '账号密码已修改或登录已过期，请重新登录', () => {
+          chrome.runtime.openOptionsPage()
+        })
+        throw new Error('登录已失效，请在设置中重新登录')
+      }
       throw new Error(result.error || '收藏失败')
     }
 

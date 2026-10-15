@@ -138,6 +138,50 @@
         <button id="saveSettings" class="btn-primary">保存设置</button>
         <button id="logout" class="btn-secondary">退出登录</button>
       </div>
+
+      <!-- 修改密码卡片 -->
+      <div class="card-section">
+        <div class="card-header" id="toggleChangePassword">
+          <div class="card-header-left">
+            <span class="card-icon">🔐</span>
+            <span class="card-title">修改账号密码</span>
+          </div>
+          <span class="toggle-arrow" id="changePasswordArrow">▼</span>
+        </div>
+        <form id="changePasswordForm" class="hidden auth-form sub-form">
+          <div class="form-group">
+            <label for="oldPassword">当前原密码</label>
+            <input
+              type="password"
+              id="oldPassword"
+              placeholder="请输入当前原密码"
+              required
+            >
+          </div>
+          <div class="form-group">
+            <label for="newPassword">新密码（至少 6 个字符）</label>
+            <input
+              type="password"
+              id="newPassword"
+              placeholder="请输入新密码"
+              required
+              minlength="6"
+            >
+          </div>
+          <div class="form-group">
+            <label for="confirmNewPassword">确认新密码</label>
+            <input
+              type="password"
+              id="confirmNewPassword"
+              placeholder="请再次输入新密码"
+              required
+              minlength="6"
+            >
+          </div>
+          <div id="changePasswordMsg" class="test-result hidden"></div>
+          <button type="submit" id="submitChangePassword" class="btn-primary btn-block">确认修改密码</button>
+        </form>
+      </div>
     </div>
 
     <!-- 导入书签入口 -->

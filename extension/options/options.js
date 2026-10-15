@@ -54,7 +54,95 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('importBookmarks').addEventListener('click', () => {
     chrome.tabs.create({ url: 'bookmarks/bookmarks.html' })
   })
+
+  // 修改密码展开/收起
+  const toggleChangePassword = document.getElementById('toggleChangePassword')
+  if (toggleChangePassword) {
+    toggleChangePassword.addEventListener('click', () => {
+      const form = document.getElementById('changePasswordForm')
+      const arrow = document.getElementById('changePasswordArrow')
+      const isHidden = form.classList.toggle('hidden')
+      arrow.classList.toggle('open', !isHidden)
+      if (!isHidden) {
+        document.getElementById('oldPassword').focus()
+      }
+    })
+  }
+
+  // 修改密码表单提交
+  const changePasswordForm = document.getElementById('changePasswordForm')
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      await handleChangePassword()
+    })
+  }
 })
+
+// 处理修改密码
+async function handleChangePassword() {
+  const oldPassword = document.getElementById('oldPassword').value
+  const newPassword = document.getElementById('newPassword').value
+  const confirmNewPassword = document.getElementById('confirmNewPassword').value
+  const msgEl = document.getElementById('changePasswordMsg')
+
+  msgEl.className = 'test-result hidden'
+
+  if (newPassword !== confirmNewPassword) {
+    msgEl.textContent = '两次输入的新密码不一致'
+    msgEl.className = 'test-result error'
+    return
+  }
+
+  if (newPassword.length < 6) {
+    msgEl.textContent = '新密码至少需要 6 个字符'
+    msgEl.className = 'test-result error'
+    return
+  }
+
+  const { userToken, apiUrl } = await chrome.storage.local.get(['userToken', 'apiUrl'])
+  if (!userToken || !apiUrl) {
+    msgEl.textContent = '未登录或 API 地址未配置'
+    msgEl.className = 'test-result error'
+    return
+  }
+
+  const submitBtn = document.getElementById('submitChangePassword')
+  submitBtn.disabled = true
+  submitBtn.textContent = '正在修改...'
+
+  try {
+    const res = await fetch(`${apiUrl}/api/auth/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userToken}`
+      },
+      body: JSON.stringify({ oldPassword, newPassword })
+    })
+
+    const data = await res.json()
+
+    if (res.ok && data.success) {
+      // 成功后更新本地 userToken 为新会话 Token
+      await chrome.storage.local.set({ userToken: data.token })
+      msgEl.textContent = '✓ 密码修改成功！登录状态已自动更新。'
+      msgEl.className = 'test-result success'
+      document.getElementById('oldPassword').value = ''
+      document.getElementById('newPassword').value = ''
+      document.getElementById('confirmNewPassword').value = ''
+    } else {
+      msgEl.textContent = data.error || '修改密码失败'
+      msgEl.className = 'test-result error'
+    }
+  } catch (err) {
+    msgEl.textContent = '网络错误: ' + err.message
+    msgEl.className = 'test-result error'
+  } finally {
+    submitBtn.disabled = false
+    submitBtn.textContent = '确认修改密码'
+  }
+}
 
 // 切换登录/注册模式
 function switchAuthMode(mode) {

@@ -138,11 +138,12 @@ async function importSelectedBookmarks() {
   showProgress()
 
   try {
-    // 获取配置
-    const { syncId, apiUrl } = await chrome.storage.local.get(['syncId', 'apiUrl'])
+    // 获取配置（优先使用已登录的 userToken，兼容旧版 syncId）
+    const { syncId, userToken, apiUrl } = await chrome.storage.local.get(['syncId', 'userToken', 'apiUrl'])
+    const authToken = userToken || syncId
 
-    if (!syncId) {
-      throw new Error('未配置同步 ID，请先在设置中配置')
+    if (!authToken) {
+      throw new Error('未登录账号，请先在扩展设置中登录')
     }
 
     // 构造书签数据
@@ -167,7 +168,7 @@ async function importSelectedBookmarks() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${syncId}`
+        'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify({
         favorites: bookmarks,
