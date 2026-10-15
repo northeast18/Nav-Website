@@ -33,6 +33,7 @@ captures/
 .cxx
 
 # Bun
+bun.lock*
 .bun/install/cache/
 
 # AWS and Azure credentials
