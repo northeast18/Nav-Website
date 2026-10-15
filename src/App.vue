@@ -178,6 +178,37 @@
         />
       </div>
 
+      <!-- 空状态展示 (当前分类下无网站且不在搜索时显示) -->
+      <div v-else-if="!debouncedQuery.trim()" class="w-full max-w-md mx-auto py-16 px-4 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex items-center justify-center backdrop-blur-md shadow-sm">
+          <svg v-if="activeCategory === '私密'" class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <svg v-else-if="activeCategory === 'favorites'" class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+          <svg v-else class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        </div>
+        <p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+          {{ activeCategory === '私密' ? '您的私密空间暂无网站' : (activeCategory === 'favorites' ? '暂无收藏的网站' : '该分类下暂无网站') }}
+        </p>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">
+          {{ activeCategory === '私密' ? '私密网站仅您登录后可见，新账号专属独立空间' : (activeCategory === 'favorites' ? '在任意卡片右键菜单中点击“收藏”即可添加到这里' : '您可以点击下方按钮添加属于您的网站') }}
+        </p>
+        <button
+          v-if="activeCategory !== 'favorites'"
+          @click="openAddWebsiteModal"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-primary hover:bg-primary-hover text-white transition-all shadow-lg shadow-primary/20 hover:scale-105 active:scale-95"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          添加网站卡片
+        </button>
+      </div>
+
       <!-- 拖拽控制按钮（仅在启用拖拽时显示） -->
       <div v-if="enableDrag && draggablesList.length > 0" class="fixed bottom-20 right-4 z-30">
         <button
@@ -825,6 +856,10 @@ const uniqueCategories = computed(() => {
   let cats = navItems.value.map(item => item.category)
   if (!isLoggedIn.value) {
     cats = cats.filter(c => c !== '我的服务' && c !== '私密')
+  } else {
+    if (!cats.includes('私密')) {
+      cats.push('私密')
+    }
   }
   return [...new Set(cats)]
 })
@@ -1164,7 +1199,7 @@ const handleCategoryClick = (item) => {
     return
   }
 
-  if (item.category === '私密') {
+  if (item.category === '私密' && !isPrivateUnlocked.value) {
     showPasswordModal.value = true
   } else {
     activeCategory.value = item.category
@@ -1319,6 +1354,14 @@ const sortedNavItems = computed(() => {
   
   if (!isLoggedIn.value) {
     items = items.filter(item => item.category !== '我的服务' && item.category !== '私密')
+  } else {
+    // 保证已登录用户的私密选项卡始终存在（新注册用户为空白，可自己创建）
+    if (!items.some(item => item.category === '私密')) {
+      items.push({
+        category: '私密',
+        items: []
+      })
+    }
   }
 
   if (order.length === 0) {

@@ -105,6 +105,25 @@ export async function onRequest(context) {
     }
     changes.push('✅ 已创建多租户性能索引')
 
+    // 4. 将历史存量的“私密”和“我的服务”卡片隔离归属给系统首位用户（即初始账户/管理员），设为非公开(is_public=0)
+    try {
+      const firstUser = await env.DB.prepare('SELECT id FROM users ORDER BY id ASC LIMIT 1').first()
+      const firstUserId = firstUser ? firstUser.id : 1
+
+      const privateUpdateResult = await env.DB.prepare(`
+        UPDATE websites 
+        SET is_public = 0, 
+            user_id = COALESCE(user_id, ?)
+        WHERE category IN ('私密', '我的服务') 
+          AND (is_public = 1 OR user_id IS NULL)
+      `).bind(firstUserId).run()
+
+      const changesCount = privateUpdateResult.meta ? privateUpdateResult.meta.changes : 0
+      changes.push(`✅ 已将历史存量中 ${changesCount} 条私密/私人服务卡片隔离归属于初始用户(ID: ${firstUserId})，并设为非公开(is_public=0)`)
+    } catch (privErr) {
+      errors.push(`隔离私密卡片失败: ${privErr.message}`)
+    }
+
     return jsonResponse({
       success: errors.length === 0,
       message: errors.length === 0 ? '多租户数据库迁移全部成功！' : '迁移过程中存在部分错误',

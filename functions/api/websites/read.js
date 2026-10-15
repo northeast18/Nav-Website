@@ -35,7 +35,11 @@ export async function onRequest(context) {
     let rows = []
 
     if (currentUser) {
-      // 1. 已登录用户：查询公共底座 + 用户自建私有网站，并应用用户的自定义覆盖 (user_website_overrides)
+      // 1. 已登录用户：
+      // - 查询公共底座（排除“私密”和“我的服务”，因为它们是严格私有的个人库）
+      // - 查询当前登录用户自建的私有网站（包括其自建的“私密”卡片）
+      // - 兼容历史未绑定 user_id 的旧私密卡片：仅首个用户/管理员可见，新注册用户不可见
+      // - 应用用户的个性化自定义覆盖 (user_website_overrides)
       try {
         const stmt = env.DB.prepare(`
           SELECT 
@@ -53,10 +57,14 @@ export async function onRequest(context) {
             CASE WHEN w.user_id = ? THEN 1 ELSE 0 END as is_mine
           FROM websites w
           LEFT JOIN user_website_overrides o ON w.id = o.website_id AND o.user_id = ?
-          WHERE (w.is_public = 1 OR w.user_id = ? OR w.user_id IS NULL)
+          WHERE (
+            (w.is_public = 1 AND w.category NOT IN ('私密', '我的服务'))
+            OR w.user_id = ?
+            OR (w.user_id IS NULL AND w.category IN ('私密', '我的服务') AND ? = (SELECT id FROM users ORDER BY id ASC LIMIT 1))
+          )
             AND COALESCE(o.is_hidden, 0) = 0
           ORDER BY category, name
-        `).bind(currentUser.userId, currentUser.userId, currentUser.userId)
+        `).bind(currentUser.userId, currentUser.userId, currentUser.userId, currentUser.userId)
 
         const result = await stmt.all()
         rows = result.results || []
@@ -67,17 +75,18 @@ export async function onRequest(context) {
         rows = fallback.results || []
       }
     } else {
-      // 2. 未登录访客：只读取公共底座网站
+      // 2. 未登录访客：只读取公共底座网站，严格排除私密卡片
       try {
         const stmt = env.DB.prepare(`
           SELECT * FROM websites
-          WHERE is_public = 1 OR user_id IS NULL
+          WHERE (is_public = 1 OR user_id IS NULL)
+            AND category NOT IN ('私密', '我的服务')
           ORDER BY category, name
         `)
         const result = await stmt.all()
         rows = result.results || []
       } catch (err) {
-        const fallback = await env.DB.prepare('SELECT * FROM websites ORDER BY category, name').all()
+        const fallback = await env.DB.prepare("SELECT * FROM websites WHERE category NOT IN ('私密', '我的服务') ORDER BY category, name").all()
         rows = fallback.results || []
       }
     }
@@ -108,6 +117,14 @@ export async function onRequest(context) {
         })
       }
     })
+
+    // 已登录用户保证包含“私密”分类对象（即使该用户刚注册，私密列表为空）
+    if (currentUser && !categorized['私密']) {
+      categorized['私密'] = {
+        category: '私密',
+        items: []
+      }
+    }
 
     // 转换为数组格式
     const navItems = Object.values(categorized)

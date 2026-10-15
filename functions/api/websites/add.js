@@ -83,8 +83,21 @@ export async function onRequest(context) {
   }
 
   // 租户归属设定：已登录用户添加为私有网站(is_public=0)，管理员添加为公共底座网站(is_public=1)
-  const targetUserId = currentUser ? currentUser.id : null
-  const isPublic = isAdmin ? 1 : 0
+  let targetUserId = currentUser ? currentUser.id : null
+  let isPublic = isAdmin ? 1 : 0
+
+  // 私密或我的服务分类属于个人专属，永远不能作为全局公共底座 (is_public=0)
+  if (data.category === '私密' || data.category === '我的服务') {
+    isPublic = 0
+    if (!targetUserId) {
+      try {
+        const firstUser = await env.DB.prepare('SELECT id FROM users ORDER BY id ASC LIMIT 1').first()
+        if (firstUser) targetUserId = firstUser.id
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
 
   try {
     let result
