@@ -3,10 +3,11 @@ import {
   checkRateLimit,
   recordFailedAttempt,
   clearFailedAttempts,
-  getAdminPassword
+  getAdminPassword,
+  authenticateRequest
 } from '../_middleware.js'
 
-// 创建新分类
+// 创建新分类（已登录用户无需管理员密码直接创建私有分类，管理员可创建全局公共分类）
 export async function onRequest(context) {
   const { request, env } = context
 
@@ -25,31 +26,30 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Method not allowed' }, 405)
   }
 
-  // 验证密码
+  // 鉴权检查 (兼容 Admin 密码和 User Token)
   const authHeader = request.headers.get('Authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return jsonResponse({ error: '需要密码验证' }, 401)
+    return jsonResponse({ error: '需要登录或提供管理员密码' }, 401)
   }
 
-  // 检查频率限制 (防止暴力破解)
+  const token = authHeader.replace('Bearer ', '')
   const clientIp = getClientIp(request)
-  const isLocked = await checkRateLimit(env, clientIp, 'admin')
-  if (isLocked) {
-    return jsonResponse({
-      error: '密码尝试次数过多，请15分钟后再试',
-      locked: true
-    }, 429)
+
+  let isAdmin = false
+  let currentUser = null
+
+  const correctAdminPassword = await getAdminPassword(env)
+  if (token === correctAdminPassword) {
+    isAdmin = true
+  } else {
+    currentUser = await authenticateRequest(request, env)
   }
 
-  const password = authHeader.replace('Bearer ', '')
-  const correctPassword = await getAdminPassword(env)
-
-  if (!correctPassword || password !== correctPassword) {
+  if (!isAdmin && !currentUser) {
     await recordFailedAttempt(env, clientIp, 'admin')
-    return jsonResponse({ error: '管理员密码错误' }, 401)
+    return jsonResponse({ error: '未授权：会话已过期或管理员密码错误' }, 401)
   }
 
-  // 密码验证成功，清除失败记录
   await clearFailedAttempts(env, clientIp, 'admin')
 
   try {
@@ -59,23 +59,33 @@ export async function onRequest(context) {
       return jsonResponse({ error: '缺少分类名称' }, 400)
     }
 
-    // 检查分类名是否已存在
-    const existingCategory = await env.DB.prepare(
-      'SELECT COUNT(*) as count FROM websites WHERE category = ?'
-    ).bind(name).first()
+    const targetUserId = currentUser ? currentUser.id : null
+    const isPublic = isAdmin ? 1 : 0
 
-    if (existingCategory.count > 0) {
+    // 检查分类在该作用域下是否已存在
+    const existingCategory = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM websites WHERE category = ? AND (user_id = ? OR (is_public = 1 AND ? = 1))'
+    ).bind(name, targetUserId, isPublic).first()
+
+    if (existingCategory && existingCategory.count > 0) {
       return jsonResponse({ error: '该分类已存在' }, 409)
     }
 
     // 插入占位符网站，确保分类可以通过 /api/websites/read 正常显示
-    await env.DB.prepare(
-      "INSERT INTO websites (name, url, category, desc, icon_url, dark_icon) VALUES (?, ?, ?, ?, ?, ?)"
-    ).bind('__placeholder__', '__placeholder__', name, '', '', 0).run()
+    try {
+      await env.DB.prepare(
+        "INSERT INTO websites (user_id, is_public, name, url, category, desc, icon_url, dark_icon) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      ).bind(targetUserId, isPublic, '__placeholder__', '__placeholder__', name, '', '', 0).run()
+    } catch (e) {
+      // 兼容旧表结构
+      await env.DB.prepare(
+        "INSERT INTO websites (name, url, category, desc, icon_url, dark_icon) VALUES (?, ?, ?, ?, ?, ?)"
+      ).bind('__placeholder__', '__placeholder__', name, '', '', 0).run()
+    }
 
     return jsonResponse({
       success: true,
-      message: `分类「${name}」创建成功`,
+      message: isAdmin ? `全局公共分类「${name}」创建成功` : `个人分类「${name}」创建成功`,
       category: name
     })
 

@@ -3,10 +3,11 @@ import {
   checkRateLimit,
   recordFailedAttempt,
   clearFailedAttempts,
-  getAdminPassword
+  getAdminPassword,
+  authenticateRequest
 } from '../_middleware.js'
 
-// 删除网站
+// 删除网站（支持管理员删除公共底座 / 用户删除私有卡片或在自己账户中隐藏公共卡片）
 export async function onRequest(context) {
   const { request, env } = context
 
@@ -25,30 +26,31 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Method not allowed' }, 405)
   }
 
-  // 验证管理员密码
+  // 鉴权检查 (兼容 Admin 密码和 User Token)
   const authHeader = request.headers.get('Authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return jsonResponse({ error: '需要管理员密码' }, 401)
+    return jsonResponse({ error: '需要登录或提供管理员密码' }, 401)
   }
 
-  // 检查频率限制 (防止暴力破解)
+  const token = authHeader.replace('Bearer ', '')
   const clientIp = getClientIp(request)
-  const isLocked = await checkRateLimit(env, clientIp, 'admin')
-  if (isLocked) {
-    return jsonResponse({
-      error: '尝试次数过多，请15分钟后再试',
-      locked: true
-    }, 429)
+
+  let isAdmin = false
+  let currentUser = null
+
+  const correctAdminPassword = await getAdminPassword(env)
+  if (token === correctAdminPassword) {
+    isAdmin = true
+  } else {
+    currentUser = await authenticateRequest(request, env)
   }
 
-  const adminPassword = authHeader.replace('Bearer ', '')
-  const correctPassword = await getAdminPassword(env)
-  if (!correctPassword || adminPassword !== correctPassword) {
+  if (!isAdmin && !currentUser) {
     await recordFailedAttempt(env, clientIp, 'admin')
-    return jsonResponse({ error: '管理员密码错误' }, 401)
+    return jsonResponse({ error: '未授权：会话已过期或管理员密码错误' }, 401)
   }
 
-  // 密码验证成功，清除失败记录
+  // 鉴权成功，清除失败记录
   await clearFailedAttempts(env, clientIp, 'admin')
 
   // 验证数据
@@ -59,8 +61,8 @@ export async function onRequest(context) {
   }
 
   try {
-    // 检查网站是否存在并获取名称
-    const existing = await env.DB.prepare('SELECT name FROM websites WHERE id = ?')
+    // 检查网站是否存在
+    const existing = await env.DB.prepare('SELECT id, name, user_id, is_public FROM websites WHERE id = ?')
       .bind(data.id)
       .first()
 
@@ -70,15 +72,49 @@ export async function onRequest(context) {
 
     const websiteName = existing.name
 
-    // 删除网站
-    await env.DB.prepare('DELETE FROM websites WHERE id = ?')
-      .bind(data.id)
-      .run()
+    // 1. 管理员操作：彻底从全站公共底座删除
+    if (isAdmin) {
+      await env.DB.prepare('DELETE FROM websites WHERE id = ?').bind(data.id).run()
 
-    return jsonResponse({
-      success: true,
-      message: `网站 "${websiteName}" 已删除`
-    })
+      return jsonResponse({
+        success: true,
+        message: `公共底座网站 "${websiteName}" 已删除（全局生效）`
+      })
+    }
+
+    // 2. 个人用户操作（无需二次管理员密码）
+    const isUserOwnCard = currentUser && existing.user_id === currentUser.id
+
+    if (isUserOwnCard) {
+      // 2.1 用户自己添加的私有卡片：彻底从私有库删除
+      await env.DB.prepare('DELETE FROM websites WHERE id = ? AND user_id = ?')
+        .bind(data.id, currentUser.id)
+        .run()
+
+      return jsonResponse({
+        success: true,
+        message: `私有网站 "${websiteName}" 已删除`
+      })
+    } else {
+      // 2.2 公共网站：在当前用户账号下标记为隐藏 (is_hidden = 1)，绝不影响公共底座和其他账号
+      try {
+        await env.DB.prepare(`
+          INSERT INTO user_website_overrides (user_id, website_id, is_hidden, updated_at)
+          VALUES (?, ?, 1, datetime('now', 'localtime'))
+          ON CONFLICT(user_id, website_id) DO UPDATE SET
+            is_hidden = 1,
+            updated_at = datetime('now', 'localtime')
+        `).bind(currentUser.id, data.id).run()
+
+        return jsonResponse({
+          success: true,
+          message: `网站 "${websiteName}" 已从您的个人主页中移除（未影响全局底座）`
+        })
+      } catch (err) {
+        console.error('隐藏公共网站失败:', err)
+        return jsonResponse({ error: '移除失败: ' + err.message }, 500)
+      }
+    }
 
   } catch (error) {
     console.error('删除网站失败:', error)

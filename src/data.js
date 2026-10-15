@@ -6,13 +6,21 @@ import { getIconUrl } from './utils/icon'
  * 从 D1 数据库加载导航网站数据
  * @returns {Promise<Array>} 分类数据列表
  */
-export async function fetchNavItems() {
+export async function fetchNavItems(token = null) {
   try {
-    // 使用 window.location.origin 确保在生产和开发环境都能正确访问 API
+    const userToken = token || (typeof localStorage !== 'undefined' ? localStorage.getItem('userToken') : null)
+    const headers = {}
+    if (userToken) {
+      headers['Authorization'] = `Bearer ${userToken}`
+    }
+
     const apiPath = `${window.location.origin}/api/websites/read`
     console.log('正在加载导航数据:', apiPath)
 
-    const response = await fetch(apiPath, { cache: 'no-store' })
+    const response = await fetch(apiPath, {
+      headers,
+      cache: 'no-store'
+    })
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)

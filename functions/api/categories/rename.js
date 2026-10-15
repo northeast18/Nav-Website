@@ -3,10 +3,11 @@ import {
   checkRateLimit,
   recordFailedAttempt,
   clearFailedAttempts,
-  getAdminPassword
+  getAdminPassword,
+  authenticateRequest
 } from '../_middleware.js'
 
-// 重命名分类
+// 重命名分类（已登录用户可免密重命名个人分类，管理员可重命名全局公共分类）
 export async function onRequest(context) {
   const { request, env } = context
 
@@ -25,31 +26,30 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Method not allowed' }, 405)
   }
 
-  // 验证密码
+  // 鉴权检查 (兼容 Admin 密码和 User Token)
   const authHeader = request.headers.get('Authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return jsonResponse({ error: '需要密码验证' }, 401)
+    return jsonResponse({ error: '需要登录或提供管理员密码' }, 401)
   }
 
-  // 检查频率限制 (防止暴力破解)
+  const token = authHeader.replace('Bearer ', '')
   const clientIp = getClientIp(request)
-  const isLocked = await checkRateLimit(env, clientIp, 'admin')
-  if (isLocked) {
-    return jsonResponse({
-      error: '密码尝试次数过多，请15分钟后再试',
-      locked: true
-    }, 429)
-  }
 
-  const password = authHeader.replace('Bearer ', '')
+  let isAdmin = false
+  let currentUser = null
+
   const correctPassword = await getAdminPassword(env)
-
-  if (!correctPassword || password !== correctPassword) {
-    await recordFailedAttempt(env, clientIp, 'admin')
-    return jsonResponse({ error: '管理员密码错误' }, 401)
+  if (token === correctPassword) {
+    isAdmin = true
+  } else {
+    currentUser = await authenticateRequest(request, env)
   }
 
-  // 密码验证成功，清除失败记录
+  if (!isAdmin && !currentUser) {
+    await recordFailedAttempt(env, clientIp, 'admin')
+    return jsonResponse({ error: '未授权：会话已过期或管理员密码错误' }, 401)
+  }
+
   await clearFailedAttempts(env, clientIp, 'admin')
 
   try {
@@ -63,24 +63,39 @@ export async function onRequest(context) {
       return jsonResponse({ error: '新旧分类名称相同' }, 400)
     }
 
-    // 检查新分类名是否已存在
-    const existingCategory = await env.DB.prepare(
-      'SELECT COUNT(*) as count FROM websites WHERE category = ?'
-    ).bind(newName).first()
+    // 1. 管理员操作：重命名全局分类
+    if (isAdmin) {
+      const result = await env.DB.prepare(
+        'UPDATE websites SET category = ? WHERE category = ?'
+      ).bind(newName, oldName).run()
 
-    if (existingCategory.count > 0) {
-      return jsonResponse({ error: '目标分类名称已存在' }, 409)
+      return jsonResponse({
+        success: true,
+        message: `全局分类「${oldName}」已重命名为「${newName}」`,
+        updatedCount: result.meta ? result.meta.changes : 0
+      })
     }
 
-    // 更新所有该分类下的网站
-    const result = await env.DB.prepare(
-      'UPDATE websites SET category = ? WHERE category = ?'
-    ).bind(newName, oldName).run()
+    // 2. 个人用户登录操作（免密）：更新该用户的私有网站和个性化覆盖记录
+    let count = 0
+    try {
+      const res1 = await env.DB.prepare(
+        'UPDATE websites SET category = ? WHERE category = ? AND user_id = ?'
+      ).bind(newName, oldName, currentUser.id).run()
+      count += (res1.meta ? res1.meta.changes : 0)
+
+      const res2 = await env.DB.prepare(
+        'UPDATE user_website_overrides SET custom_category = ? WHERE custom_category = ? AND user_id = ?'
+      ).bind(newName, oldName, currentUser.id).run()
+      count += (res2.meta ? res2.meta.changes : 0)
+    } catch (e) {
+      console.warn('更新分类失败:', e.message)
+    }
 
     return jsonResponse({
       success: true,
-      message: `已将「${oldName}」重命名为「${newName}」`,
-      updatedCount: result.meta.changes
+      message: `已将您的「${oldName}」分类重命名为「${newName}」`,
+      updatedCount: count
     })
 
   } catch (error) {

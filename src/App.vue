@@ -1179,15 +1179,20 @@ const editCategory = async (oldName) => {
     return
   }
 
-  const adminPassword = await requestAdminPassword()
-  if (!adminPassword) return
+  let authToken = null
+  if (isLoggedIn.value && userToken.value) {
+    authToken = userToken.value
+  } else {
+    authToken = await requestAdminPassword()
+    if (!authToken) return
+  }
 
   try {
     const response = await fetch('/api/categories/rename', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminPassword}`
+        'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify({ oldName, newName })
     })
@@ -1215,15 +1220,20 @@ const deleteCategory = async (categoryName) => {
     return
   }
 
-  const adminPassword = await requestAdminPassword()
-  if (!adminPassword) return
+  let authToken = null
+  if (isLoggedIn.value && userToken.value) {
+    authToken = userToken.value
+  } else {
+    authToken = await requestAdminPassword()
+    if (!authToken) return
+  }
 
   try {
     const response = await fetch('/api/categories/delete', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminPassword}`
+        'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify({ name: categoryName })
     })
@@ -1251,15 +1261,20 @@ const createNewCategory = async () => {
     return
   }
 
-  const adminPassword = await requestAdminPassword()
-  if (!adminPassword) return
+  let authToken = null
+  if (isLoggedIn.value && userToken.value) {
+    authToken = userToken.value
+  } else {
+    authToken = await requestAdminPassword()
+    if (!authToken) return
+  }
 
   try {
     const response = await fetch('/api/categories/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminPassword}`
+        'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify({ name: name.trim() })
     })
@@ -1526,6 +1541,9 @@ const handleLogin = async () => {
 
       // 自动打开云同步模态框
       showSyncModal.value = true
+
+      // 刷新数据展示私有+个性化内容
+      await refreshNavData()
     } else {
       authError.value = result.error || '登录失败'
     }
@@ -1555,6 +1573,9 @@ const handleLogout = () => {
 
   syncStatus.value = { type: 'success', message: '✅ 已退出登录' }
   setTimeout(() => syncStatus.value = null, 2000)
+
+  // 刷新数据回退为访客公共底座展示
+  refreshNavData()
 }
 
 // === 点击统计 ===
@@ -1771,7 +1792,7 @@ const cancelPassword = () => {
 // 刷新导航数据
 const refreshNavData = async () => {
   try {
-    navItems.value = await fetchNavItems()
+    navItems.value = await fetchNavItems(userToken.value)
     friendLinksList.value = await fetchFriendLinks()
     console.log('✓ 数据已刷新')
   } catch (error) {
@@ -2013,9 +2034,13 @@ const openEditModal = (item) => {
 
 // 保存编辑
 const saveEdit = async () => {
-  const adminPassword = await requestAdminPassword()
-
-  if (!adminPassword) return
+  let authToken = null
+  if (isLoggedIn.value && userToken.value) {
+    authToken = userToken.value
+  } else {
+    authToken = await requestAdminPassword()
+    if (!authToken) return
+  }
 
   // 针对文字图标拼装字符串
   const submitData = { ...editForm.value }
@@ -2027,10 +2052,6 @@ const saveEdit = async () => {
       radius: editTextIconForm.radius
     })
   } else {
-    // 如果之前是文字图标，现在改回图片图标，直接使用 input 框内的 URL
-    // 因为文字图标存在 editForm.iconUrl 中时是以 text-icon: 前缀存储的，
-    // 用户如果是从文字图标切到图片图标，且修改了 URL，editForm.iconUrl 会保留更新。
-    // 但如果用户没有修改（或者我们把前缀清空），需要确保发过去的是普通的 URL。
     if (isTextIcon(submitData.iconUrl)) {
       submitData.iconUrl = ''
     }
@@ -2041,7 +2062,7 @@ const saveEdit = async () => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminPassword}`
+        'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify(submitData)
     })
@@ -2090,8 +2111,13 @@ const submitAddWebsite = async (formData) => {
     return
   }
 
-  const adminPassword = await requestAdminPassword()
-  if (!adminPassword) return
+  let authToken = null
+  if (isLoggedIn.value && userToken.value) {
+    authToken = userToken.value
+  } else {
+    authToken = await requestAdminPassword()
+    if (!authToken) return
+  }
 
   addWebsiteLoading.value = true
   addWebsiteError.value = ''
@@ -2101,7 +2127,7 @@ const submitAddWebsite = async (formData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminPassword}`
+        'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify(formData)
     })
@@ -2140,16 +2166,20 @@ const deleteWebsite = async (item) => {
 
   if (!confirmed) return
 
-  const adminPassword = await requestAdminPassword()
-
-  if (!adminPassword) return
+  let authToken = null
+  if (isLoggedIn.value && userToken.value) {
+    authToken = userToken.value
+  } else {
+    authToken = await requestAdminPassword()
+    if (!authToken) return
+  }
 
   try {
     const response = await fetch('/api/websites/delete', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminPassword}`
+        'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify({ id: item.id })
     })
@@ -2171,9 +2201,13 @@ const deleteWebsite = async (item) => {
 
 // 移动网站到其他分类
 const moveWebsiteToCategory = async (item, targetCategory) => {
-  const adminPassword = await requestAdminPassword()
-
-  if (!adminPassword) return
+  let authToken = null
+  if (isLoggedIn.value && userToken.value) {
+    authToken = userToken.value
+  } else {
+    authToken = await requestAdminPassword()
+    if (!authToken) return
+  }
 
   try {
     // 特殊处理：移动到友情链接时，执行复制操作（保留原记录）
@@ -2182,7 +2216,7 @@ const moveWebsiteToCategory = async (item, targetCategory) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminPassword}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
           name: item.name,
@@ -2212,7 +2246,7 @@ const moveWebsiteToCategory = async (item, targetCategory) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminPassword}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
           id: item.id,

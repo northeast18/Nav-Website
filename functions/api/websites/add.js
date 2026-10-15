@@ -1,8 +1,9 @@
 /**
- * 添加新网站到 D1 数据库（安全升级版）
+ * 添加新网站到 D1 数据库（多租户支持）
  *
- * 安全改进：
- * - 添加会话鉴权检查
+ * 逻辑：
+ * - 用户登录添加：绑定到该用户的私有库 (user_id = user.id, is_public = 0)，仅自己可见
+ * - 管理员添加：添加到全站公共底座 (user_id = NULL, is_public = 1)，所有用户可见
  */
 
 import {
@@ -39,26 +40,23 @@ export async function onRequest(context) {
     }, 429)
   }
 
-  // 鉴权检查 (兼容老的 Admin 密码和新的 User Token)
+  // 鉴权检查 (兼容 Admin 密码和 User Token)
   const authHeader = request.headers.get('Authorization')
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null
 
-  let isAuthenticated = false
+  let isAdmin = false
+  let currentUser = null
 
   const correctAdminPassword = await getAdminPassword(env)
   if (token === correctAdminPassword) {
-    isAuthenticated = true
+    isAdmin = true
   } else if (token) {
-    // 尝试作为用户 Session 验证
-    const user = await authenticateRequest(request, env)
-    if (user) {
-      isAuthenticated = true
-    }
+    currentUser = await authenticateRequest(request, env)
   }
 
-  if (!isAuthenticated) {
+  if (!isAdmin && !currentUser) {
     await recordFailedAttempt(env, clientIp, 'admin')
-    return unauthorizedResponse('您需要提供正确的管理员密码或登录后才能添加网站')
+    return unauthorizedResponse('您需要提供正确的管理员密码或登录账号后才能添加网站')
   }
 
   // 鉴权成功，清除失败记录
@@ -71,7 +69,7 @@ export async function onRequest(context) {
     return jsonResponse({ error: '缺少必填字段: name, url, category' }, 400)
   }
 
-  // 如果没有提供 iconUrl，自动使用服务端图标服务
+  // 图标补全
   let iconUrl = data.iconUrl || ''
   if (!iconUrl && data.url) {
     try {
@@ -84,34 +82,58 @@ export async function onRequest(context) {
     }
   }
 
-  try {
-    // 插入数据并获取结果
-    const result = await env.DB.prepare(`
-      INSERT INTO websites (name, url, category, desc, icon_url, lan_url, dark_icon)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      data.name,
-      data.url,
-      data.category,
-      data.desc || '',
-      iconUrl,
-      data.lanUrl || '',
-      data.darkIcon ? 1 : 0
-    ).run()
+  // 租户归属设定：已登录用户添加为私有网站(is_public=0)，管理员添加为公共底座网站(is_public=1)
+  const targetUserId = currentUser ? currentUser.id : null
+  const isPublic = isAdmin ? 1 : 0
 
-    // 获取新插入的 ID（从结果中获取）
+  try {
+    let result
+    try {
+      result = await env.DB.prepare(`
+        INSERT INTO websites (user_id, is_public, name, url, category, desc, icon_url, lan_url, dark_icon)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        targetUserId,
+        isPublic,
+        data.name,
+        data.url,
+        data.category,
+        data.desc || '',
+        iconUrl,
+        data.lanUrl || '',
+        data.darkIcon ? 1 : 0
+      ).run()
+    } catch (schemaErr) {
+      // 兼容尚未执行新迁移的情况
+      console.warn('插入新字段失败，降级执行旧结构插入:', schemaErr.message)
+      result = await env.DB.prepare(`
+        INSERT INTO websites (name, url, category, desc, icon_url, lan_url, dark_icon)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        data.name,
+        data.url,
+        data.category,
+        data.desc || '',
+        iconUrl,
+        data.lanUrl || '',
+        data.darkIcon ? 1 : 0
+      ).run()
+    }
+
     const lastId = result.meta.last_row_id
 
     return jsonResponse({
       success: true,
       id: lastId,
-      message: `网站 "${data.name}" 已添加到「${data.category}」`
+      isPublic: isPublic === 1,
+      message: isAdmin
+        ? `公共网站 "${data.name}" 已添加到「${data.category}」`
+        : `私有网站 "${data.name}" 已添加到您的个人「${data.category}」分类`
     })
 
   } catch (error) {
     console.error('添加网站失败:', error)
 
-    // 检查是否是唯一约束错误
     if (error.message.includes('UNIQUE')) {
       return jsonResponse({ error: '该网址已存在' }, 409)
     }

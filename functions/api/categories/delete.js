@@ -3,10 +3,11 @@ import {
   checkRateLimit,
   recordFailedAttempt,
   clearFailedAttempts,
-  getAdminPassword
+  getAdminPassword,
+  authenticateRequest
 } from '../_middleware.js'
 
-// 删除分类
+// 删除分类（已登录用户免密删除个人分类，管理员删除全局公共分类）
 export async function onRequest(context) {
   const { request, env } = context
 
@@ -25,31 +26,30 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Method not allowed' }, 405)
   }
 
-  // 验证密码
+  // 鉴权检查 (兼容 Admin 密码和 User Token)
   const authHeader = request.headers.get('Authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return jsonResponse({ error: '需要密码验证' }, 401)
+    return jsonResponse({ error: '需要登录或提供管理员密码' }, 401)
   }
 
-  // 检查频率限制 (防止暴力破解)
+  const token = authHeader.replace('Bearer ', '')
   const clientIp = getClientIp(request)
-  const isLocked = await checkRateLimit(env, clientIp, 'admin')
-  if (isLocked) {
-    return jsonResponse({
-      error: '密码尝试次数过多，请15分钟后再试',
-      locked: true
-    }, 429)
-  }
 
-  const password = authHeader.replace('Bearer ', '')
+  let isAdmin = false
+  let currentUser = null
+
   const correctPassword = await getAdminPassword(env)
-
-  if (!correctPassword || password !== correctPassword) {
-    await recordFailedAttempt(env, clientIp, 'admin')
-    return jsonResponse({ error: '管理员密码错误' }, 401)
+  if (token === correctPassword) {
+    isAdmin = true
+  } else {
+    currentUser = await authenticateRequest(request, env)
   }
 
-  // 密码验证成功，清除失败记录
+  if (!isAdmin && !currentUser) {
+    await recordFailedAttempt(env, clientIp, 'admin')
+    return jsonResponse({ error: '未授权：会话已过期或管理员密码错误' }, 401)
+  }
+
   await clearFailedAttempts(env, clientIp, 'admin')
 
   try {
@@ -59,48 +59,62 @@ export async function onRequest(context) {
       return jsonResponse({ error: '缺少分类名称' }, 400)
     }
 
-    // 检查分类下有多少真实网站（排除占位符）
-    const countResult = await env.DB.prepare(
-      "SELECT COUNT(*) as count FROM websites WHERE category = ? AND name != '__placeholder__'"
-    ).bind(name).first()
+    // 1. 管理员操作：删除全局公共分类
+    if (isAdmin) {
+      const countResult = await env.DB.prepare(
+        "SELECT COUNT(*) as count FROM websites WHERE category = ? AND name != '__placeholder__'"
+      ).bind(name).first()
 
-    const websiteCount = countResult.count
+      const websiteCount = countResult ? countResult.count : 0
+
+      if (websiteCount > 0 && !moveTo) {
+        return jsonResponse({
+          error: '分类下有网站，需要指定目标分类',
+          websiteCount,
+          requireMoveTo: true
+        }, 400)
+      }
+
+      if (websiteCount > 0 && moveTo) {
+        await env.DB.prepare('UPDATE websites SET category = ? WHERE category = ?').bind(moveTo, name).run()
+      } else if (!moveTo) {
+        await env.DB.prepare('DELETE FROM websites WHERE category = ?').bind(name).run()
+      }
+
+      return jsonResponse({
+        success: true,
+        message: moveTo ? `已将全局「${name}」分类下的网站移动到「${moveTo}」` : `已彻底删除全局分类「${name}」`
+      })
+    }
+
+    // 2. 个人用户操作（免密）：操作属于该用户的网站分类
+    const countResult = await env.DB.prepare(
+      "SELECT COUNT(*) as count FROM websites WHERE category = ? AND user_id = ? AND name != '__placeholder__'"
+    ).bind(name, currentUser.id).first()
+
+    const websiteCount = countResult ? countResult.count : 0
 
     if (websiteCount > 0 && !moveTo) {
       return jsonResponse({
-        error: '分类下有网站，需要指定目标分类',
+        error: '分类下有您的自建网站，请指定移动到的目标分类',
         websiteCount,
         requireMoveTo: true
       }, 400)
     }
 
-    let deletedCount = 0
-
     if (websiteCount > 0 && moveTo) {
-      // 将网站移动到其他分类
-      const result = await env.DB.prepare(
-        'UPDATE websites SET category = ? WHERE category = ?'
-      ).bind(moveTo, name).run()
-
-      deletedCount = result.meta.changes
-    }
-
-    // 删除分类下的所有网站（如果未移动，或者移动完成后确认删除）
-    // 注意：这里实际上是删除该分类下的所有网站记录
-    if (!moveTo) {
-      const deleteResult = await env.DB.prepare(
-        'DELETE FROM websites WHERE category = ?'
-      ).bind(name).run()
-
-      deletedCount = deleteResult.meta.changes
+      await env.DB.prepare(
+        'UPDATE websites SET category = ? WHERE category = ? AND user_id = ?'
+      ).bind(moveTo, name, currentUser.id).run()
+    } else if (!moveTo) {
+      await env.DB.prepare(
+        'DELETE FROM websites WHERE category = ? AND user_id = ?'
+      ).bind(name, currentUser.id).run()
     }
 
     return jsonResponse({
       success: true,
-      message: moveTo
-        ? `已将 ${deletedCount} 个网站从「${name}」移动到「${moveTo}」`
-        : `已删除分类「${name}」及其下的 ${deletedCount} 个网站`,
-      deletedCount
+      message: moveTo ? `已将「${name}」下的网站移动到「${moveTo}」` : `已删除分类「${name}」`
     })
 
   } catch (error) {
