@@ -390,18 +390,34 @@ const emit = defineEmits([
   'open-sync'
 ])
 
+// 判断是否为网站管理站长（首个注册账号 north / ID: 1）
+const isSuperAdmin = computed(() => {
+  if (!props.isLoggedIn) {
+    return true
+  }
+  const username = props.currentUser?.username
+  const userId = props.currentUser?.userId
+  return userId === 1 || (typeof username === 'string' && username.toLowerCase() === 'north')
+})
+
 // 选项卡
 const activeTab = ref(props.initialTab || (props.isLoggedIn ? 'account' : 'admin'))
 
 watch(() => props.initialTab, (newTab) => {
-  if (newTab) activeTab.value = newTab
+  if (newTab) {
+    if (newTab === 'admin' && !isSuperAdmin.value) {
+      activeTab.value = 'account'
+    } else {
+      activeTab.value = newTab
+    }
+  }
 })
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
     statusMessage.text = ''
     resetForms()
-    if (props.initialTab) {
+    if (props.initialTab && (props.initialTab !== 'admin' || isSuperAdmin.value)) {
       activeTab.value = props.initialTab
     } else {
       activeTab.value = props.isLoggedIn ? 'account' : 'admin'
@@ -422,11 +438,15 @@ const UserKeyIcon = () => h('svg', { fill: 'none', stroke: 'currentColor', viewB
 
 const tabs = computed(() => {
   if (props.isLoggedIn) {
-    return [
+    const list = [
       { id: 'account', label: '账号密码', icon: UserKeyIcon },
-      { id: 'private', label: '私密空间密码', icon: LockClosedIcon },
-      { id: 'admin', label: '站长管理员密码', icon: ShieldIcon }
+      { id: 'private', label: '私密空间密码', icon: LockClosedIcon }
     ]
+    // 只有首个注册的站长账号 (north / ID: 1) 拥有修改全局管理员密码的权限
+    if (isSuperAdmin.value) {
+      list.push({ id: 'admin', label: '站长管理员密码', icon: ShieldIcon })
+    }
+    return list
   }
   return [
     { id: 'admin', label: '站长管理员密码', icon: ShieldIcon },
