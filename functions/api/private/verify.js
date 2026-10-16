@@ -3,7 +3,9 @@ import {
   checkRateLimit,
   recordFailedAttempt,
   clearFailedAttempts,
-  getPrivatePassword
+  getPrivatePassword,
+  validateSession,
+  verifyPassword
 } from '../_middleware.js'
 
 // 私密分类密码验证 API
@@ -42,7 +44,41 @@ export async function onRequest(context) {
       }, 429)
     }
 
-    // 读取正确密码（优先 KV，回退环境变量）
+    // 1. 优先使用用户会话验证专属私密密码
+    const authHeader = request.headers.get('Authorization')
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7)
+      try {
+        const session = await validateSession(env, token)
+        if (session) {
+          const user = await env.DB.prepare(
+            'SELECT id, username, private_password_hash FROM users WHERE id = ?'
+          ).bind(session.userId).first()
+
+          if (user) {
+            if (!user.private_password_hash) {
+              return jsonResponse({
+                error: '当前账号尚未设置私密密码',
+                needSetup: true
+              }, 400)
+            }
+
+            const isValid = await verifyPassword(password, user.private_password_hash)
+            if (isValid) {
+              await clearFailedAttempts(env, clientIp, 'private')
+              return jsonResponse({ success: true, isUserPersonal: true })
+            } else {
+              await recordFailedAttempt(env, clientIp, 'private')
+              return jsonResponse({ error: '私密密码错误' }, 401)
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('验证用户私密密码失败，降级回退:', e.message)
+      }
+    }
+
+    // 2. 未登录或会话不可用时，使用全局隐私密码
     const correctPassword = await getPrivatePassword(env)
 
     if (!correctPassword) {
@@ -51,11 +87,9 @@ export async function onRequest(context) {
 
     // 验证密码
     if (password === correctPassword) {
-      // 密码验证成功，清除失败记录
       await clearFailedAttempts(env, clientIp, 'private')
-      return jsonResponse({ success: true })
+      return jsonResponse({ success: true, isGlobal: true })
     } else {
-      // 密码验证失败，记录失败尝试
       await recordFailedAttempt(env, clientIp, 'private')
       return jsonResponse({ error: '密码错误' }, 401)
     }

@@ -124,6 +124,21 @@ export async function onRequest(context) {
       errors.push(`隔离私密卡片失败: ${privErr.message}`)
     }
 
+    // 5. 检查 users 表并添加 private_password_hash 独立私密空间密码字段
+    try {
+      const userTableInfo = await env.DB.prepare('PRAGMA table_info(users)').all()
+      const userColumns = (userTableInfo.results || []).map(c => c.name)
+
+      if (!userColumns.includes('private_password_hash')) {
+        await env.DB.prepare('ALTER TABLE users ADD COLUMN private_password_hash TEXT').run()
+        changes.push('✅ 已添加 users.private_password_hash 独立私密密码字段')
+      } else {
+        changes.push('ℹ️ users.private_password_hash 字段已存在')
+      }
+    } catch (e) {
+      errors.push(`检查/升级 users 表失败: ${e.message}`)
+    }
+
     return jsonResponse({
       success: errors.length === 0,
       message: errors.length === 0 ? '多租户数据库迁移全部成功！' : '迁移过程中存在部分错误',

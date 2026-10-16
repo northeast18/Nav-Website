@@ -311,7 +311,7 @@
       </div>
     </div>
 
-    <!-- 6. 密码验证弹窗 -->
+    <!-- 6. 密码验证 / 设置专属私密密码弹窗 -->
     <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" @click.self="cancelPassword">
       <div class="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-none"></div>
 
@@ -320,44 +320,65 @@
         <div class="absolute inset-0 bg-gradient-to-br from-red-600/5 via-transparent to-orange-600/5 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
 
         <div class="relative z-10">
-          <div class="flex justify-between items-center mb-6 sm:mb-8">
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <svg class="w-8 h-8 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex justify-between items-center mb-5 sm:mb-6">
+            <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+              <svg class="w-7 h-7 text-orange-500 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              密码验证
+              <span>{{ isPrivateSetupMode ? '设置私密空间密码' : '解锁私密空间' }}</span>
             </h3>
             <button @click="cancelPassword" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
 
-          <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">请输入密码以访问私密分类</p>
+          <div class="mb-5 p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-xs text-orange-600 dark:text-orange-400">
+            <p v-if="isPrivateSetupMode">
+              💡 当前账号尚未设置专属私密密码。每个账号的私密空间互相隔离，请设置专属于您当前账号的私密密码（至少4位）：
+            </p>
+            <p v-else>
+              🔒 请输入您当前账号的专属私密空间密码以解锁。私密内容仅您当前账号可见：
+            </p>
+          </div>
 
           <div class="space-y-4">
-            <input
-              v-model="passwordInput"
-              @keypress.enter="verifyPassword"
-              type="password"
-              placeholder="请输入密码"
-              class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-red-400/50 focus:ring-2 focus:ring-red-400/20 transition-all"
-              autofocus
-            />
+            <div>
+              <label v-if="isPrivateSetupMode" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">设置密码</label>
+              <input
+                v-model="passwordInput"
+                @keypress.enter="isPrivateSetupMode ? null : verifyPassword()"
+                type="password"
+                :placeholder="isPrivateSetupMode ? '请输入新私密密码（至少4位）' : '请输入私密空间密码'"
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/20 transition-all text-sm"
+                autofocus
+              />
+            </div>
 
-            <p v-if="passwordError" class="text-red-500 dark:text-red-400 text-sm">密码错误，请重试</p>
+            <div v-if="isPrivateSetupMode">
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">确认密码</label>
+              <input
+                v-model="passwordConfirmInput"
+                @keypress.enter="verifyPassword()"
+                type="password"
+                placeholder="请再次确认新私密密码"
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/20 transition-all text-sm"
+              />
+            </div>
 
-            <div class="flex gap-3">
+            <p v-if="passwordError" class="text-red-500 dark:text-red-400 text-xs font-medium">{{ passwordErrorMessage || '密码错误，请重试' }}</p>
+
+            <div class="flex gap-3 pt-2">
               <button
                 @click="cancelPassword"
-                class="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl transition-colors"
+                class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl transition-colors text-xs sm:text-sm font-medium"
               >
                 取消
               </button>
               <button
                 @click="verifyPassword"
-                class="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white rounded-xl transition-all shadow-lg shadow-red-500/30 hover:shadow-red-500/50 font-medium"
+                class="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 text-xs sm:text-sm font-medium"
               >
-                确认
+                {{ isPrivateSetupMode ? '保存并解锁' : '确认解锁' }}
               </button>
             </div>
           </div>
@@ -921,6 +942,9 @@ const addWebsiteForm = ref({
 const addWebsiteLoading = ref(false)
 const addWebsiteError = ref('')
 const passwordInput = ref('') // 密码输入
+const passwordConfirmInput = ref('') // 确认密码输入
+const passwordErrorMessage = ref('') // 密码错误信息
+const isPrivateSetupMode = ref(false) // 是否为首次设置私密密码模式
 let searchDebounceTimer = null
 
 // === 管理员认证弹窗状态 ===
@@ -1194,13 +1218,42 @@ const toggleCategoryEditMode = () => {
 }
 
 // 处理分类按钮点击
-const handleCategoryClick = (item) => {
+const handleCategoryClick = async (item) => {
   if (isCategoryEditModeActive.value) {
     // 编辑模式下不切换分类
     return
   }
 
-  if (item.category === '私密' && !isPrivateUnlocked.value) {
+  if (item.category === '私密') {
+    if (isPrivateUnlocked.value) {
+      activeCategory.value = '私密'
+      return
+    }
+
+    passwordInput.value = ''
+    passwordConfirmInput.value = ''
+    passwordError.value = false
+    passwordErrorMessage.value = ''
+
+    // 查询当前用户是否已设置过个人私密密码
+    if (isLoggedIn.value && userToken.value) {
+      try {
+        const res = await fetch('/api/private/status', {
+          headers: { 'Authorization': `Bearer ${userToken.value}` }
+        })
+        const data = await res.json()
+        if (data.isLoggedIn && !data.hasPassword) {
+          isPrivateSetupMode.value = true
+        } else {
+          isPrivateSetupMode.value = false
+        }
+      } catch (e) {
+        isPrivateSetupMode.value = false
+      }
+    } else {
+      isPrivateSetupMode.value = false
+    }
+
     showPasswordModal.value = true
   } else {
     activeCategory.value = item.category
@@ -1796,15 +1849,65 @@ const toggleFavorite = (item) => {
   scheduleSync()
 }
 
-// === 密码验证逻辑 ===
-// 验证密码（通过 API）
+// === 密码验证与设置逻辑 ===
 const verifyPassword = async () => {
+  passwordError.value = false
+  passwordErrorMessage.value = ''
+
+  if (isPrivateSetupMode.value) {
+    // 首次设置私密空间密码
+    if (!passwordInput.value || passwordInput.value.trim().length < 4) {
+      passwordError.value = true
+      passwordErrorMessage.value = '私密空间密码至少需要 4 个字符'
+      return
+    }
+    if (passwordInput.value !== passwordConfirmInput.value) {
+      passwordError.value = true
+      passwordErrorMessage.value = '两次输入的密码不一致'
+      return
+    }
+
+    try {
+      const response = await fetch('/api/private/set-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken.value}`
+        },
+        body: JSON.stringify({ password: passwordInput.value.trim() })
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        isPrivateUnlocked.value = true
+        showPasswordModal.value = false
+        activeCategory.value = '私密'
+        passwordInput.value = ''
+        passwordConfirmInput.value = ''
+        syncStatus.value = { type: 'success', message: '✅ 个人专属私密密码已设置并解锁！' }
+        setTimeout(() => syncStatus.value = null, 3000)
+      } else {
+        passwordError.value = true
+        passwordErrorMessage.value = result.error || '设置密码失败，请重试'
+      }
+    } catch (e) {
+      passwordError.value = true
+      passwordErrorMessage.value = '请求失败: ' + e.message
+    }
+    return
+  }
+
+  // 解锁验证
   try {
+    const headers = { 'Content-Type': 'application/json' }
+    if (isLoggedIn.value && userToken.value) {
+      headers['Authorization'] = `Bearer ${userToken.value}`
+    }
+
     const response = await fetch('/api/private/verify', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers,
       body: JSON.stringify({ password: passwordInput.value })
     })
 
@@ -1816,12 +1919,20 @@ const verifyPassword = async () => {
       activeCategory.value = '私密'
       passwordError.value = false
       passwordInput.value = ''
+      passwordConfirmInput.value = ''
+    } else if (result.needSetup) {
+      // 提示需要首次设置
+      isPrivateSetupMode.value = true
+      passwordError.value = false
+      passwordErrorMessage.value = ''
     } else {
       passwordError.value = true
+      passwordErrorMessage.value = result.error || '密码错误，请重试'
     }
   } catch (error) {
     console.error('密码验证失败:', error)
     passwordError.value = true
+    passwordErrorMessage.value = '请求失败，请稍后重试'
   }
 }
 
@@ -1829,7 +1940,10 @@ const verifyPassword = async () => {
 const cancelPassword = () => {
   showPasswordModal.value = false
   passwordInput.value = ''
+  passwordConfirmInput.value = ''
   passwordError.value = false
+  passwordErrorMessage.value = ''
+  isPrivateSetupMode.value = false
 }
 
 // === 书签导入处理 ===

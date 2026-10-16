@@ -134,16 +134,48 @@
 
       <!-- 2. 修改隐私密码 -->
       <form v-if="activeTab === 'private'" @submit.prevent="submitPrivatePassword" class="space-y-4">
-        <div class="p-3 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
+        <!-- 已登录用户的专属提示 -->
+        <div v-if="isLoggedIn" class="p-3 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
           <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <div>
-            修改隐私密码需提供管理员密码进行鉴权。修改后，在首页解锁「私密」分类导航卡片需使用新密码。
+            私密空间密码用于解锁您的专属「私密」分类导航卡片。此密码由您自主管理，完全独立，无需管理员授权。
           </div>
         </div>
 
-        <div>
+        <!-- 未登录状态的全局提示 -->
+        <div v-else class="p-3 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
+          <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div>
+            修改站长全局隐私密码需提供管理员密码进行鉴权。修改后，在首页解锁全局公共「私密」卡片需使用新密码。
+          </div>
+        </div>
+
+        <!-- 已登录用户：旧私密密码 -->
+        <div v-if="isLoggedIn">
+          <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">当前旧私密密码（首次设置可留空）</label>
+          <div class="relative">
+            <input
+              v-model="privateForm.oldPassword"
+              :type="showPwd.privateOld ? 'text' : 'password'"
+              class="glass-input pr-10"
+              placeholder="请输入当前私密密码（若尚未设置可留空）"
+            />
+            <button
+              type="button"
+              @click="showPwd.privateOld = !showPwd.privateOld"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <EyeIcon :show="showPwd.privateOld" />
+            </button>
+          </div>
+        </div>
+
+        <!-- 未登录站长：验证管理员密码 -->
+        <div v-else>
           <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">验证管理员密码</label>
           <div class="relative">
             <input
@@ -164,7 +196,7 @@
         </div>
 
         <div>
-          <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">新隐私分类密码</label>
+          <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">新私密空间密码</label>
           <div class="relative">
             <input
               v-model="privateForm.newPassword"
@@ -209,7 +241,7 @@
           <button type="button" @click="handleClose" class="btn-action-cancel">取消</button>
           <button type="submit" :disabled="loading" class="btn-action-primary">
             <span v-if="loading" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-            <span>{{ loading ? '正在保存...' : '更新隐私密码' }}</span>
+            <span>{{ loading ? '正在保存...' : '更新私密密码' }}</span>
           </button>
         </div>
       </form>
@@ -324,7 +356,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, watch } from 'vue'
+import { ref, reactive, h, watch, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
 
 const props = defineProps({
@@ -392,8 +424,8 @@ const tabs = computed(() => {
   if (props.isLoggedIn) {
     return [
       { id: 'account', label: '账号密码', icon: UserKeyIcon },
-      { id: 'admin', label: '站长管理员密码', icon: ShieldIcon },
-      { id: 'private', label: '站长隐私密码', icon: LockClosedIcon }
+      { id: 'private', label: '私密空间密码', icon: LockClosedIcon },
+      { id: 'admin', label: '站长管理员密码', icon: ShieldIcon }
     ]
   }
   return [
@@ -419,6 +451,7 @@ const showPwd = reactive({
   adminOld: false,
   adminNew: false,
   adminConfirm: false,
+  privateOld: false,
   privateAdmin: false,
   privateNew: false,
   privateConfirm: false,
@@ -428,7 +461,7 @@ const showPwd = reactive({
 })
 
 const adminForm = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
-const privateForm = reactive({ adminPassword: '', newPassword: '', confirmPassword: '' })
+const privateForm = reactive({ oldPassword: '', adminPassword: '', newPassword: '', confirmPassword: '' })
 const accountForm = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
 
 const switchTab = (tabId) => {
@@ -440,6 +473,7 @@ const resetForms = () => {
   adminForm.oldPassword = ''
   adminForm.newPassword = ''
   adminForm.confirmPassword = ''
+  privateForm.oldPassword = ''
   privateForm.adminPassword = ''
   privateForm.newPassword = ''
   privateForm.confirmPassword = ''
@@ -474,7 +508,7 @@ const submitAdminPassword = async () => {
     })
     const data = await res.json()
     if (res.ok && data.success) {
-      statusMessage.text = '✅ 管理员密码已成功修改！'
+      statusMessage.text = '✅ 站长管理员密码已成功修改！'
       statusMessage.type = 'success'
       const newPwd = adminForm.newPassword
       resetForms()
@@ -502,24 +536,52 @@ const submitPrivatePassword = async () => {
 
   loading.value = true
   try {
-    const res = await fetch('/api/auth/change-private-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        adminPassword: privateForm.adminPassword,
-        newPassword: privateForm.newPassword
+    if (props.isLoggedIn) {
+      // 已登录用户：修改个人专属私密空间密码
+      const headers = { 'Content-Type': 'application/json' }
+      if (props.userToken) {
+        headers['Authorization'] = `Bearer ${props.userToken}`
+      }
+      const res = await fetch('/api/private/change-password', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          oldPassword: privateForm.oldPassword,
+          newPassword: privateForm.newPassword
+        })
       })
-    })
-    const data = await res.json()
-    if (res.ok && data.success) {
-      statusMessage.text = '✅ 隐私密码已成功修改！'
-      statusMessage.type = 'success'
-      const newPwd = privateForm.newPassword
-      resetForms()
-      emit('private-password-changed', newPwd)
+      const data = await res.json()
+      if (res.ok && data.success) {
+        statusMessage.text = '✅ 个人专属私密密码已成功修改！'
+        statusMessage.type = 'success'
+        const newPwd = privateForm.newPassword
+        resetForms()
+        emit('private-password-changed', newPwd)
+      } else {
+        statusMessage.text = data.error || '修改失败，请重试'
+        statusMessage.type = 'error'
+      }
     } else {
-      statusMessage.text = data.error || '修改失败，请重试'
-      statusMessage.type = 'error'
+      // 未登录访客/站长：修改全局隐私密码
+      const res = await fetch('/api/auth/change-private-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminPassword: privateForm.adminPassword,
+          newPassword: privateForm.newPassword
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        statusMessage.text = '✅ 站长全局隐私密码已成功修改！'
+        statusMessage.type = 'success'
+        const newPwd = privateForm.newPassword
+        resetForms()
+        emit('private-password-changed', newPwd)
+      } else {
+        statusMessage.text = data.error || '修改失败，请重试'
+        statusMessage.type = 'error'
+      }
     }
   } catch (err) {
     statusMessage.text = '网络请求失败: ' + err.message
