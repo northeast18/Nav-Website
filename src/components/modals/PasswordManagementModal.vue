@@ -55,8 +55,9 @@
           <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <div>
-            管理员密码用于添加、编辑、删除网站及管理分类等权限。修改后即刻生效，无需重新部署。
+          <div class="space-y-1">
+            <p class="font-semibold">此项为全站站长（全局超级管理员）密码</p>
+            <p>仅用于全局公共底座的管理维护。如果您是注册用户要修改自己的登录密码，请点击上方<b>「账号密码」</b>，直接独立修改，无需管理员授权！</p>
           </div>
         </div>
 
@@ -243,7 +244,7 @@
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">{{ currentUser?.username }}</p>
-              <p class="text-[11px] text-gray-500 dark:text-gray-400">云同步注册账号</p>
+              <p class="text-[11px] text-green-600 dark:text-green-400 font-medium">个人独立账号 · 修改密码无需管理员授权</p>
             </div>
           </div>
 
@@ -358,7 +359,7 @@ const emit = defineEmits([
 ])
 
 // 选项卡
-const activeTab = ref(props.initialTab)
+const activeTab = ref(props.initialTab || (props.isLoggedIn ? 'account' : 'admin'))
 
 watch(() => props.initialTab, (newTab) => {
   if (newTab) activeTab.value = newTab
@@ -368,6 +369,11 @@ watch(() => props.show, (newVal) => {
   if (newVal) {
     statusMessage.text = ''
     resetForms()
+    if (props.initialTab) {
+      activeTab.value = props.initialTab
+    } else {
+      activeTab.value = props.isLoggedIn ? 'account' : 'admin'
+    }
   }
 })
 
@@ -382,11 +388,20 @@ const UserKeyIcon = () => h('svg', { fill: 'none', stroke: 'currentColor', viewB
   h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: '2', d: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z' })
 ])
 
-const tabs = [
-  { id: 'admin', label: '管理员密码', icon: ShieldIcon },
-  { id: 'private', label: '隐私密码', icon: LockClosedIcon },
-  { id: 'account', label: '账号密码', icon: UserKeyIcon }
-]
+const tabs = computed(() => {
+  if (props.isLoggedIn) {
+    return [
+      { id: 'account', label: '账号密码', icon: UserKeyIcon },
+      { id: 'admin', label: '站长管理员密码', icon: ShieldIcon },
+      { id: 'private', label: '站长隐私密码', icon: LockClosedIcon }
+    ]
+  }
+  return [
+    { id: 'admin', label: '站长管理员密码', icon: ShieldIcon },
+    { id: 'private', label: '站长隐私密码', icon: LockClosedIcon },
+    { id: 'account', label: '账号密码', icon: UserKeyIcon }
+  ]
+})
 
 // 眼睛小组件
 const EyeIcon = ({ show }) => {

@@ -20,7 +20,7 @@
           :is-auto-filling="isAutoFilling"
           @open-sync="showSyncModal = true"
           @open-theme="showThemeModal = true"
-          @open-password-management="openPasswordModalWithTab('admin')"
+          @open-password-management="openPasswordModalWithTab()"
           @toggle-edit="toggleCategoryEditMode"
           @open-import="showBookmarkImport = true"
           @open-add-website="openAddWebsiteModal"
@@ -877,10 +877,11 @@ const showEditModal = ref(false) // 控制编辑弹窗
 const showBookmarkImport = ref(false) // 控制书签导入弹窗
 const showAddWebsiteModal = ref(false) // 控制添加网站弹窗
 const showPasswordManagementModal = ref(false) // 控制密码管理弹窗
-const passwordManagementInitialTab = ref('admin') // 密码管理当前激活标签
+const passwordManagementInitialTab = ref('account') // 密码管理当前激活标签
 
-const openPasswordModalWithTab = (tab = 'admin') => {
-  passwordManagementInitialTab.value = tab
+const openPasswordModalWithTab = (tab = null) => {
+  const targetTab = tab || (isLoggedIn.value ? 'account' : 'admin')
+  passwordManagementInitialTab.value = targetTab
   showPasswordManagementModal.value = true
 }
 
